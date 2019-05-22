@@ -1,6 +1,4 @@
 import random
-import time
-from datetime import datetime
 from tkinter import *
 
 
@@ -55,6 +53,7 @@ root.configure(background=background_color)
 english_dict = {'Ходить': ['go', 'went', 'gone'],
                 'Спорить': 'argue',
                 'Привести в порядок свою комнату': 'tidy your room',
+                'Выносить мусор': 'take aut the rubbish',
                 }
 
 label = Label(frame_top,
@@ -70,11 +69,11 @@ b1 = Button(frame_top, text="Проверить", width=10, height=1)
 
 b1.config(command=change)
 
-button = Button(frame_bot, text="Закрыть")
+button = Button(frame_bot, text="Выход")
 # button.bind('<Button-1>', button_exit)
 button.config(command=button_exit)
 
-frame_top.pack(padx=10, pady=10)
+frame_top.pack(padx=10, pady=10, expand=1)
 frame_bot.pack(padx=10, pady=10)
 
 label.pack(side=LEFT, padx=10, pady=10)
