@@ -1,6 +1,6 @@
 import random
 from tkinter import *
-
+"тест для Веры"
 
 def button_exit():
     exit()
