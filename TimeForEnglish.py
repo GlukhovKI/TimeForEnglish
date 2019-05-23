@@ -4,7 +4,8 @@ from tkinter import *
 
 
 def window_deleted():
-    print(1)
+    from tkinter import messagebox
+    messagebox.showinfo("Попалась", 'Блять! ВЕРА! Для кого кнопка "Выход"???')
     root.quit()
 
 
@@ -42,11 +43,9 @@ def change():
     key_result = english_dict.get(key, {})
     translate = key_result.get('translate')
     answer = entry.get().lower()
-    print('answer -', answer)
-    print('translate -', translate)
+    print(answer, ' -> ', translate)
     if answer == translate:
         text_example['text'] = key_result.get('example_text')
-        print('example_text -', key_result.get('example_text'))
         info_label['text'] = 'Молодчик!'
         info_label.config(fg='blue')
         entry.config(fg='black')
@@ -64,71 +63,83 @@ def change():
         info_label.config(fg='red')
 
 
-# подготавливаем массив слов для изучения из файла English_dictionary.csv
-english_dict = csv_reader()
+def set_root_config() -> Tk:
+    """
+    Создание и заполнение конфигурации для корневого окна (root)
+    """
+    root = Tk()
+    root.title('Time For English')
 
-# создаем основное окно программы
-root = Tk()
-root.title('Time For English')
+    # запрещаем пользователю менять размеры окна!
+    root.resizable(False, False)
 
-# запрещаем пользователю менять размеры окна!
-root.resizable(False, False)
+    # для особенных
+    root.protocol('WM_DELETE_WINDOW', window_deleted)  # обработчик закрытия окна
 
-# для особенных
-root.protocol('WM_DELETE_WINDOW', window_deleted) # обработчик закрытия окна
+    # установка цвета фона окна
+    root.configure(background=background_color)
 
-# установка цвета фона окна
-background_color = '#555'
-root.configure(background=background_color)
+    # узнаем размеры экрана
+    screen_width = root.winfo_screenwidth()  # ширина экрана
+    screen_height = root.winfo_screenheight()  # высота экрана
 
-info_frame_top = Frame(background=background_color)
-text_example_frame = Frame(background=background_color)
-frame_top = Frame()
-frame_bot = Frame()
+    width = screen_width // 2  # середина экрана
+    height = screen_height // 2
+    width -= 450  # смещение от середины
+    height -= 350
+    root.geometry('900x700+{}+{}'.format(width, height))
+    return root
 
-# узнаем размеры экрана
-screen_width = root.winfo_screenwidth()  # ширина экрана
-screen_height = root.winfo_screenheight()  # высота экрана
 
-width = screen_width // 2  # середина экрана
-height = screen_height // 2
-width -= 450  # смещение от середины
-height -= 350
-root.geometry('900x700+{}+{}'.format(width, height))
+if __name__ == '__main__':
+    background_color = '#555'
 
-info_label = Label(info_frame_top)
-info_label.config(fg='white', height=2, width=15, font="Arial 16", background=background_color, text='Ну попробуй!')
-info_label.place(relx=0.5, rely=0.5)
+    # подготавливаем массив слов для изучения из файла English_dictionary.csv
+    english_dict = csv_reader()
 
-label = Label(frame_top)
-label.config(fg='black', height=2, width=45, font="Arial 12")
-label['text'] = random.choice(list(english_dict.keys()))
-label.place(relx=0.5, rely=0.5)
+    # создаем основное окно программы
+    root = set_root_config()
 
-text_example = Label(text_example_frame)
-text_example.config(height=2, font="Arial 12", background=background_color, fg='white')
-text_example.place(relx=0.5, rely=0.5)
 
-entry = Entry(frame_top, width=20, font="Arial 12")
+    # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
+    info_frame_top = Frame(root, background=background_color)
+    text_example_frame = Frame(root, background='green')
+    frame_top = Frame(root)
+    frame_bot = Frame(root)
 
-b1 = Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
+    info_label = Label(info_frame_top)
+    info_label.config(fg='white', height=2, width=15, font="Arial 16", background=background_color, text='Ну попробуй!')
+    info_label.place(relx=0.5, rely=0.5)
 
-b1.config(command=change)
+    label = Label(frame_top)
+    label.config(fg='black', height=2, width=45, font="Arial 12")
+    label['text'] = random.choice(list(english_dict.keys()))
+    label.place(relx=0.5, rely=0.5)
 
-button = Button(frame_bot, text="Выход", font="Arial 12")
-# button.bind('<Button-1>', button_exit)
-button.config(command=button_exit)
+    text_example = Label(text_example_frame)
+    text_example.config(height=2, font="Arial 12", background=background_color, fg='white')
+    text_example.place(relx=0.5, rely=0.5)
 
-info_frame_top.pack(padx=10, pady=10)
-frame_top.pack(expand=1)
-text_example.pack(padx=10, pady=10)
-text_example_frame.pack(fill=X)
-frame_bot.pack(padx=10, pady=10)
+    entry = Entry(frame_top, width=20, font="Arial 12")
 
-info_label.pack(side=BOTTOM, padx=10, pady=10)
-label.pack(side=LEFT, padx=10, pady=10)
-entry.pack(side=LEFT, padx=10, pady=10)
-b1.pack(side=LEFT, padx=10, pady=10)
-button.pack(side=RIGHT)
+    b1 = Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
 
-root.mainloop()
+    b1.config(command=change)
+
+    button = Button(frame_bot, text="Выход", font="Arial 12")
+    # button.bind('<Button-1>', button_exit)
+    button.config(command=button_exit)
+
+    info_frame_top.pack(padx=10, pady=10)
+    frame_top.pack(expand=1)
+    text_example.pack(padx=10, pady=10)
+    text_example_frame.pack(side=TOP,fill=X)
+    frame_bot.pack(padx=10, pady=10)
+
+    info_label.pack(side=BOTTOM, padx=10, pady=10)
+    label.pack(side=LEFT, padx=10, pady=10)
+    entry.pack(side=LEFT, padx=10, pady=10)
+    b1.pack(side=LEFT, padx=10, pady=10)
+    button.pack(side=RIGHT)
+
+    root.mainloop()
