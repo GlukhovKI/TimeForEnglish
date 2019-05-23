@@ -1,22 +1,50 @@
 import random
+import csv
 from tkinter import *
-"тест для Веры"
+
+
+def csv_reader() -> dict:
+    """
+    Read a csv file
+    """
+
+    english_dict = {}
+    csv_path = "English_dictionary.csv"
+
+    with open(csv_path, "r") as csv_file:
+        reader = csv.DictReader(csv_file, delimiter=';')
+        for row in reader:
+            english_dict[row['key']] = row
+
+    if english_dict:
+        return english_dict
+    else:
+        raise Exception('Нет данных для изучения - файл English_dictionary.csv')
+
 
 def button_exit():
+    """
+    Реализация кнопки "Выход"
+    """
     exit()
 
 
 def change():
-    translate = english_dict.get(label['text'])
-    key = translate[0] if isinstance(translate, list) else translate
+    """
+    Проверка введенного пользователем значения перевода
+    """
+    key = label['text']
+    translate = english_dict.get(key, {}).get('translate')
     answer = entry.get()
-
-    if answer == key:
+    print('answer -', answer)
+    print('translate -', translate)
+    if answer == translate:
 
         info_label['text'] = 'Молодчик!'
         info_label.config(fg='blue')
+        entry.config(fg='black')
 
-        del english_dict[label['text']]
+        del english_dict[key]
         if not english_dict:
             exit()
         label['text'] = random.choice(list(english_dict.keys()))
@@ -33,6 +61,10 @@ def change():
         info_label.config(fg='red')
 
 
+# подготавливаем массив слов для изучения из файла English_dictionary.csv
+english_dict = csv_reader()
+
+# создаем основное окно программы
 root = Tk()
 info_frame_top = Frame()
 frame_top = Frame()
@@ -51,12 +83,6 @@ root.geometry('900x700+{}+{}'.format(width, height))
 # установка цвета фона окна
 background_color = '#555'
 root.configure(background=background_color)
-
-english_dict = {'Ходить': ['go', 'went', 'gone'],
-                'Спорить': 'argue',
-                'Привести в порядок свою комнату': 'tidy your room',
-                'Выносить мусор': 'take out the rubbish',
-                }
 
 info_label = Label(info_frame_top)
 info_label.config(fg='black', height=2, width=15, font="Arial 12")
