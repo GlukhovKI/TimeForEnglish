@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
     # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
     info_frame_top = Frame(root, background=background_color)
-    text_example_frame = Frame(root, background='green')
+    text_example_frame = Frame(root, background=background_color)
     frame_top = Frame(root)
     frame_bot = Frame(root)
 
