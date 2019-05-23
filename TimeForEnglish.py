@@ -28,26 +28,26 @@ def csv_reader() -> dict:
         raise Exception('Нет данных для изучения - файл English_dictionary.csv')
 
 
-def button_exit():
+def close_button_func():
     """
-    Реализация кнопки "Выход"
+    Реализация кнопки "Close"
     """
-    exit()
+    root.quit()
 
 
-def change():
+def change(event=None):
     """
     Проверка введенного пользователем значения перевода
     """
     key = label['text']
     key_result = english_dict.get(key, {})
-    translate = key_result.get('translate')
+    translate = key_result.get('translate', '').lower()
     answer = entry.get().lower()
     print(answer, ' -> ', translate)
     if answer == translate:
         text_example['text'] = key_result.get('example_text')
         info_label['text'] = 'Молодчик!'
-        info_label.config(fg='blue')
+        info_label.config(fg='white')
         entry.config(fg='black')
 
         del english_dict[key]
@@ -70,16 +70,16 @@ def set_root_config() -> Tk:
     root = Tk()
     root.title('Time For English')
 
-    # запрещаем пользователю менять размеры окна!
+    # Запрещаем пользователю менять размеры окна!
     root.resizable(False, False)
 
     # для особенных
     root.protocol('WM_DELETE_WINDOW', window_deleted)  # обработчик закрытия окна
 
-    # установка цвета фона окна
+    # Установка цвета фона окна
     root.configure(background=background_color)
 
-    # узнаем размеры экрана
+    # Размеры экрана
     screen_width = root.winfo_screenwidth()  # ширина экрана
     screen_height = root.winfo_screenheight()  # высота экрана
 
@@ -94,12 +94,11 @@ def set_root_config() -> Tk:
 if __name__ == '__main__':
     background_color = '#555'
 
-    # подготавливаем массив слов для изучения из файла English_dictionary.csv
+    # Подготавливаем массив слов для изучения из файла English_dictionary.csv
     english_dict = csv_reader()
 
-    # создаем основное окно программы
+    # Создаем основное окно программы
     root = set_root_config()
-
 
     # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
     info_frame_top = Frame(root, background=background_color)
@@ -120,15 +119,17 @@ if __name__ == '__main__':
     text_example.config(height=2, font="Arial 12", background=background_color, fg='white')
     text_example.place(relx=0.5, rely=0.5)
 
+    # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
     entry = Entry(frame_top, width=20, font="Arial 12")
+    # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
+    entry.bind("<Return>", change)
+    entry.focus()
 
-    b1 = Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
+    check_button = Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
+    check_button.config(command=change)
 
-    b1.config(command=change)
-
-    button = Button(frame_bot, text="Выход", font="Arial 12")
-    # button.bind('<Button-1>', button_exit)
-    button.config(command=button_exit)
+    close_button = Button(text="Close", font="Arial 12")
+    close_button.config(command=close_button_func)
 
     info_frame_top.pack(padx=10, pady=10)
     frame_top.pack(expand=1)
@@ -139,7 +140,7 @@ if __name__ == '__main__':
     info_label.pack(side=BOTTOM, padx=10, pady=10)
     label.pack(side=LEFT, padx=10, pady=10)
     entry.pack(side=LEFT, padx=10, pady=10)
-    b1.pack(side=LEFT, padx=10, pady=10)
-    button.pack(side=RIGHT)
+    check_button.pack(side=LEFT, padx=10, pady=10)
+    close_button.pack(side=RIGHT, padx=5, pady=5)
 
     root.mainloop()
