@@ -1,11 +1,12 @@
-import random
 import csv
-from tkinter import *
+import random
+import time
+import tkinter
 
 
 def window_deleted():
     from tkinter import messagebox
-    messagebox.showinfo("Попалась", 'Блять! ВЕРА! Для кого кнопка "Close"???')
+    messagebox.showwarning("Блять", 'Блять! ВЕРА! Для кого кнопка "Close"???')
     root.quit()
 
 
@@ -44,8 +45,16 @@ def change(event=None):
     translate = key_result.get('translate', '').lower()
     answer = entry.get().lower()
     print(answer, ' -> ', translate)
+
     if answer == translate:
-        text_example['text'] = key_result.get('example_text')
+        example_text['text'] = key_result.get('example_text')
+
+        # если примера текста нет, то в верхний блок примеров встанет вопрос
+        if not example_text['text']:
+            example_text['text'] = key_result.get('example_question')
+        else:
+            example_question['text'] = key_result.get('example_question')
+            
         info_label['text'] = 'Молодчик!'
         info_label.config(fg='white')
         entry.config(fg='black')
@@ -55,7 +64,7 @@ def change(event=None):
             exit()
             
         label['text'] = random.choice(list(english_dict.keys()))
-        entry.delete(0, END)
+        entry.delete(0, tkinter.END)
 
     else:
         entry.config(fg='red')
@@ -63,11 +72,11 @@ def change(event=None):
         info_label.config(fg='red')
 
 
-def set_root_config() -> Tk:
+def set_root_config() -> tkinter.Tk:
     """
     Создание и заполнение конфигурации для корневого окна (root)
     """
-    root = Tk()
+    root = tkinter.Tk()
     root.title('Time For English')
 
     # Запрещаем пользователю менять размеры окна!
@@ -91,6 +100,11 @@ def set_root_config() -> Tk:
     return root
 
 
+def tick():
+    timer.after(200, tick)
+    timer['text'] = time.strftime('%H:%M:%S')
+
+
 if __name__ == '__main__':
     background_color = '#555'
 
@@ -101,44 +115,58 @@ if __name__ == '__main__':
     root = set_root_config()
 
     # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
-    info_frame_top = Frame(root, background=background_color)
-    text_example_frame = Frame(root, background=background_color)
-    frame_top = Frame(root)
+    info_frame_top = tkinter.Frame(root, background=background_color)
+    example_text_frame = tkinter.Frame(root, background=background_color)
+    example_question_frame = tkinter.Frame(root, background=background_color)
+    frame_top = tkinter.Frame(root)
 
-    info_label = Label(info_frame_top)
-    info_label.config(fg='white', height=2, width=15, font="Arial 16", background=background_color, text='Ну попробуй!')
+    info_frame_top.pack(fill=tkinter.X)
+    frame_top.pack()
+    frame_top.place(rely=0.4, relx=0.08)
+    example_text_frame.pack(fill=tkinter.X)
+    example_text_frame.place(rely=0.5, relx=0.1)
+    example_question_frame.pack(fill=tkinter.X)
+    example_question_frame.place(rely=0.54, relx=0.1)
+
+    info_label = tkinter.Label(info_frame_top)
+    info_label.config(fg='white', height=2, width=150, font="Arial 16", background=background_color, text='Ну попробуй!')
     info_label.place(relx=0.5, rely=0.5)
 
-    label = Label(frame_top)
+    label = tkinter.Label(frame_top)
     label.config(fg='black', height=2, width=45, font="Arial 12")
     label['text'] = random.choice(list(english_dict.keys()))
     label.place(relx=0.5, rely=0.5)
 
-    text_example = Label(text_example_frame)
-    text_example.config(height=2, font="Arial 12", background=background_color, fg='white')
-    text_example.place(relx=0.5, rely=0.5)
+    example_text = tkinter.Label(example_text_frame)
+    example_text.config(height=1, width=75, font="Arial 12", background=background_color, fg='white')
+
+    example_question = tkinter.Label(example_question_frame)
+    example_question.config(height=1, width=75, font="Arial 12", background=background_color, fg='white')
 
     # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
-    entry = Entry(frame_top, width=20, font="Arial 12")
+    entry = tkinter.Entry(frame_top, width=20, font="Arial 12")
     # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
     entry.bind("<Return>", change)
     entry.focus()
 
-    check_button = Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
+    check_button = tkinter.Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
     check_button.config(command=change)
 
-    close_button = Button(text="Close", font="Arial 12")
+    close_button = tkinter.Button(text="Close", font="Arial 12")
     close_button.config(command=close_button_func)
 
-    info_frame_top.pack(padx=10, pady=10)
-    frame_top.pack(expand=1)
-    text_example.pack(padx=10, pady=10)
-    text_example_frame.pack(side=TOP,fill=X)
+    info_label.pack(side=tkinter.BOTTOM, padx=10, pady=10)
+    example_text.pack(padx=10)
+    example_question.pack(padx=10)
 
-    info_label.pack(side=BOTTOM, padx=10, pady=10)
-    label.pack(side=LEFT, padx=10, pady=10)
-    entry.pack(side=LEFT, padx=10, pady=10)
-    check_button.pack(side=LEFT, padx=10, pady=10)
-    close_button.pack(side=RIGHT, padx=5, pady=5)
+    label.pack(side=tkinter.LEFT, padx=10, pady=10)
+    entry.pack(side=tkinter.LEFT, padx=10, pady=10)
+    check_button.pack(side=tkinter.LEFT, padx=10, pady=10)
+    close_button.pack(padx=5, pady=5)
+    close_button.place(relx=0.93, rely=0.94)
+
+    timer = tkinter.Label(font="Arial 14", fg='white', background=background_color)
+    timer.pack()
+    timer.after_idle(tick)
 
     root.mainloop()
