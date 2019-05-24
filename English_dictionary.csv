@@ -1,12 +1,12 @@
-key;translate;form_2;form_3;irregular_verbs;phrase;example_text;example_question;description
-������;go;went;gone;True;;;;
-�������;argue;;;;;;;
-�������� � ������� ���� �������;tidy your room;;;;True;Boys, go�tidy your room!;;
-������� �����;take out the rubbish;;;;True;;And who will�take out the rubbish?;
-�������;collaborator;;;;;He is collaborator on the project;;"a person who works jointly on an activity or project; an associate."
-������;car's;;;;;;;
-�����������;do your best;;;;;;;
-�������� ������;break the ice;;;;;;;
-���������;take a look;;;;;;;
-������ ���-�� �����;take someone's place;;;;;;;
-���������� ����������;make a mess;;;;;;;
+key;translate;form_1;form_2;irregular_verbs;phrase;example_text;description
+������;go;went;gone;True;;;
+�������;argue;;;;;;
+�������� � ������� ���� �������;tidy your room;;;;True;Boys, go�tidy your room!;
+������� �����;take out the rubbish;;;;True;And who will�take out the rubbish?;
+�������;�ollaborator;;;;;He is collaborator on the project;"a person who works jointly on an activity or project; an associate."
+������;car's;;;;;;
+�����������;do your best;;;;;;
+�������� ������;break the ice;;;;;;
+���������;take a look;;;;;;
+������ ���-�� �����;take someone's place;;;;;;
+���������� ����������;make a mess;;;;;;
