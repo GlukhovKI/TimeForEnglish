@@ -5,7 +5,7 @@ from tkinter import *
 
 def window_deleted():
     from tkinter import messagebox
-    messagebox.showinfo("Попалась", 'Блять! ВЕРА! Для кого кнопка "Выход"???')
+    messagebox.showinfo("Попалась", 'Блять! ВЕРА! Для кого кнопка "Close"???')
     root.quit()
 
 
@@ -104,7 +104,6 @@ if __name__ == '__main__':
     info_frame_top = Frame(root, background=background_color)
     text_example_frame = Frame(root, background=background_color)
     frame_top = Frame(root)
-    frame_bot = Frame(root)
 
     info_label = Label(info_frame_top)
     info_label.config(fg='white', height=2, width=15, font="Arial 16", background=background_color, text='Ну попробуй!')
@@ -135,7 +134,6 @@ if __name__ == '__main__':
     frame_top.pack(expand=1)
     text_example.pack(padx=10, pady=10)
     text_example_frame.pack(side=TOP,fill=X)
-    frame_bot.pack(padx=10, pady=10)
 
     info_label.pack(side=BOTTOM, padx=10, pady=10)
     label.pack(side=LEFT, padx=10, pady=10)
