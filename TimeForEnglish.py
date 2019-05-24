@@ -54,7 +54,7 @@ def change(event=None):
             example_text['text'] = key_result.get('example_question')
         else:
             example_question['text'] = key_result.get('example_question')
-            
+
         info_label['text'] = 'Молодчик!'
         info_label.config(fg='white')
         entry.config(fg='black')
