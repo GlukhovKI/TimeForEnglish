@@ -1,9 +1,9 @@
 import csv
 import random
-import time
 import tkinter
 
 SECOND = MINUTE = HOUR = 0
+
 
 def window_deleted():
     from tkinter import messagebox
@@ -62,15 +62,19 @@ def change(event=None):
 
         del english_dict[key]
         if not english_dict:
-            exit()
-            
-        label['text'] = random.choice(list(english_dict.keys()))
+            root.after(3000, root.quit())
+
+        check_button.after(3000, new_test)
         entry.delete(0, tkinter.END)
 
     else:
-        entry.config(fg='red')
-        info_label['text'] = 'ЛОШАРА!'
-        info_label.config(fg='red')
+        entry.config(fg='#CC3366')
+        info_label['text'] = 'Turn on your brain!'
+        info_label.config(fg='#CC3366')
+
+
+def new_test():
+    label['text'] = random.choice(list(english_dict.keys()))
 
 
 def set_root_config() -> tkinter.Tk:
