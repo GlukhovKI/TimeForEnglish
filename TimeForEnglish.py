@@ -70,7 +70,7 @@ def change(event=None):
     else:
         entry.config(fg='#CC3366')
         info_label['text'] = 'Turn on your brain!'
-        info_label.config(fg='#CC3366')
+        info_label.config(fg='#993333')
 
 
 def new_test():
