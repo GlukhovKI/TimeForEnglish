@@ -3,6 +3,7 @@ import random
 import time
 import tkinter
 
+SECOND = MINUTE = HOUR = 0
 
 def window_deleted():
     from tkinter import messagebox
@@ -101,12 +102,20 @@ def set_root_config() -> tkinter.Tk:
 
 
 def tick():
-    timer.after(200, tick)
-    timer['text'] = time.strftime('%H:%M:%S')
+    global SECOND, MINUTE, HOUR
+    timer.after(1000, tick)
+    SECOND += 1
+    if SECOND == 59:
+        MINUTE += 1
+        SECOND = -1
+    elif MINUTE == 59:
+        HOUR += 1
+        MINUTE = -1
+    timer['text'] = "%s:%s:%s" % (HOUR, MINUTE, SECOND)
 
 
 if __name__ == '__main__':
-    background_color = '#555'
+    background_color = '#669999'
 
     # Подготавливаем массив слов для изучения из файла English_dictionary.csv
     english_dict = csv_reader()
@@ -129,7 +138,8 @@ if __name__ == '__main__':
     example_question_frame.place(rely=0.54, relx=0.1)
 
     info_label = tkinter.Label(info_frame_top)
-    info_label.config(fg='white', height=2, width=150, font="Arial 16", background=background_color, text='Ну попробуй!')
+    info_label.config(fg='white', height=2, width=150, font="Arial 16",
+                      background=background_color, text='You need to study more!')
     info_label.place(relx=0.5, rely=0.5)
 
     label = tkinter.Label(frame_top)
@@ -138,10 +148,10 @@ if __name__ == '__main__':
     label.place(relx=0.5, rely=0.5)
 
     example_text = tkinter.Label(example_text_frame)
-    example_text.config(height=1, width=75, font="Arial 12", background=background_color, fg='white')
+    example_text.config(height=1, width=63, font="Purisa 14", background=background_color, fg='white')
 
     example_question = tkinter.Label(example_question_frame)
-    example_question.config(height=1, width=75, font="Arial 12", background=background_color, fg='white')
+    example_question.config(height=1, width=63, font="Purisa 14", background=background_color, fg='white')
 
     # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
     entry = tkinter.Entry(frame_top, width=20, font="Arial 12")
@@ -165,7 +175,7 @@ if __name__ == '__main__':
     close_button.pack(padx=5, pady=5)
     close_button.place(relx=0.93, rely=0.94)
 
-    timer = tkinter.Label(font="Arial 14", fg='white', background=background_color)
+    timer = tkinter.Label(text="%s:%s:%s" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white', background=background_color)
     timer.pack()
     timer.after_idle(tick)
 
