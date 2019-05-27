@@ -3,6 +3,7 @@ import random
 import tkinter
 
 SECOND = MINUTE = HOUR = 0
+MISTAKE = False
 
 
 def window_deleted():
@@ -41,6 +42,8 @@ def change(event=None):
     """
     Проверка введенного пользователем значения перевода
     """
+
+    global MISTAKE
     key = label['text']
     key_result = english_dict.get(key, {})
     translate = key_result.get('translate', '').lower()
@@ -60,20 +63,28 @@ def change(event=None):
         info_label.config(fg='white')
         entry.config(fg='black')
 
-        del english_dict[key]
+        # Если пользователь совершил ошибку, слово не считается пройденным
+        if not MISTAKE:
+            del english_dict[key]
+        MISTAKE = False
+
         if not english_dict:
-            root.after(3000, root.quit())
+            root.after(5000, root.quit())
 
-        check_button.after(3000, new_test)
+        # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
+        if example_text['text']:
+            check_button.after(3000, new_text_message)
+        else:
+            new_text_message()
         entry.delete(0, tkinter.END)
-
     else:
+        MISTAKE = True
         entry.config(fg='#CC3366')
         info_label['text'] = 'Turn on your brain!'
         info_label.config(fg='#CC3366')
 
 
-def new_test():
+def new_text_message():
     label['text'] = random.choice(list(english_dict.keys()))
 
 
@@ -107,6 +118,7 @@ def set_root_config() -> tkinter.Tk:
 
 def tick():
     global SECOND, MINUTE, HOUR
+    # Через каждую секунду происходит рекурсивый вызов функции
     timer.after(1000, tick)
     SECOND += 1
     if SECOND == 59:
