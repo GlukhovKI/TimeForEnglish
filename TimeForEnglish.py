@@ -152,10 +152,10 @@ if __name__ == '__main__':
     label.place(relx=0.5, rely=0.5)
 
     example_text = tkinter.Label(example_text_frame)
-    example_text.config(height=3, width=70, font="Purisa 14", background=background_color, fg='white')
+    example_text.config(height=1, width=63, font="Purisa 18", background=background_color, fg='white')
 
     example_question = tkinter.Label(example_question_frame)
-    example_question.config(height=3, width=70, font="Purisa 14", background=background_color, fg='white')
+    example_question.config(height=1, width=63, font="Purisa 18", background=background_color, fg='white')
 
     # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
     entry = tkinter.Entry(frame_top, width=20, font="Arial 12")
