@@ -59,7 +59,7 @@ def change(event=None):
         else:
             example_question['text'] = key_result.get('example_question')
 
-        info_label['text'] = 'Молодчик!'
+        info_label['text'] = 'I knew you could do it!'
         info_label.config(fg='white')
         entry.config(fg='black')
 
@@ -164,10 +164,10 @@ if __name__ == '__main__':
     label.place(relx=0.5, rely=0.5)
 
     example_text = tkinter.Label(example_text_frame)
-    example_text.config(height=1, width=63, font="Purisa 18", background=background_color, fg='white')
+    example_text.config(height=1, width=50, font="Purisa 18", background=background_color, fg='white')
 
     example_question = tkinter.Label(example_question_frame)
-    example_question.config(height=1, width=63, font="Purisa 18", background=background_color, fg='white')
+    example_question.config(height=1, width=50, font="Purisa 18", background=background_color, fg='white')
 
     # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
     entry = tkinter.Entry(frame_top, width=20, font="Arial 12")
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     entry.pack(side=tkinter.LEFT, padx=10, pady=10)
     check_button.pack(side=tkinter.LEFT, padx=10, pady=10)
     close_button.pack(padx=5, pady=5)
-    close_button.place(relx=0.93, rely=0.94)
+    close_button.place(relx=0.90, rely=0.90)
 
     timer = tkinter.Label(text="%s:%s:%s" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white', background=background_color)
     timer.pack()
