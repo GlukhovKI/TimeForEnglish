@@ -12,21 +12,24 @@ def window_deleted():
     root.quit()
 
 
-def csv_reader() -> dict:
+def csv_reader() -> (dict, str):
     """
-    Read a csv file
+    Получения списка вссех слов и последних 10ти добавленных
     """
 
     english_dict = {}
     csv_path = "English_dictionary.csv"
 
+    last_ten_words = []
     with open(csv_path, "r") as csv_file:
         reader = csv.DictReader(csv_file, delimiter=';')
         for row in reader:
             english_dict[row['key']] = row
+            last_ten_words.append(row['key'])
 
     if english_dict:
-        return english_dict
+        last_ten_words = "\n".join([word + ' -> ' + english_dict[word].get('translate', '').lower() for word in last_ten_words[-10:]])
+        return english_dict, last_ten_words
     else:
         raise Exception('Нет данных для изучения - файл English_dictionary.csv')
 
@@ -130,12 +133,26 @@ def tick():
     timer['text'] = "%s:%s:%s" % (HOUR, MINUTE, SECOND)
 
 
+def check_last_ten_words():
+    if not 0:
+        # info_frame_top.destroy()
+        last_ten_words_frame = tkinter.LabelFrame(root, background=background_color, text='Last 10 words added', fg='red', font="Arial 14")
+        last_ten_words_frame.pack(fill="both", expand="yes")
+        # last_ten_words_frame.place(rely=0.1, relx=0.01)
+
+        ten_words = tkinter.Label(last_ten_words_frame)
+        ten_words.config(fg='white', height=10, width=50, font="Arial 14",
+                          background=background_color, text=last_ten_words)
+        ten_words.pack()
+
+
 if __name__ == '__main__':
     background_color = '#669999'
 
     # Подготавливаем массив слов для изучения из файла English_dictionary.csv
-    english_dict = csv_reader()
-
+    english_dict, last_ten_words = csv_reader()
+    print(len(last_ten_words))
+    print(last_ten_words)
     # Создаем основное окно программы
     root = set_root_config()
 
@@ -144,6 +161,11 @@ if __name__ == '__main__':
     example_text_frame = tkinter.Frame(root, background=background_color)
     example_question_frame = tkinter.Frame(root, background=background_color)
     frame_top = tkinter.Frame(root)
+
+    last_ten_words_button = tkinter.Button(text="Last 10 words added", font="Arial 12")
+    last_ten_words_button.config(command=check_last_ten_words)
+
+    last_ten_words_button.pack(side=tkinter.TOP, padx=10, pady=10)
 
     info_frame_top.pack(fill=tkinter.X)
     frame_top.pack()
