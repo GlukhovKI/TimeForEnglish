@@ -4,6 +4,7 @@ import tkinter
 
 SECOND = MINUTE = HOUR = 0
 MISTAKE = False
+test = ''
 
 
 def window_deleted():
