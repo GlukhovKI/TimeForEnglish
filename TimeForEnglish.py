@@ -4,218 +4,244 @@ import tkinter
 
 SECOND = MINUTE = HOUR = 0
 MISTAKE = False
-test = ''
 
 
-def window_deleted():
-    from tkinter import messagebox
-    messagebox.showwarning("Блять", 'Блять! ВЕРА! Для кого кнопка "Close"???')
-    root.quit()
+class SampleApp(tkinter.Tk):
+    def __init__(self):
+        tkinter.Tk.__init__(self)
+        self.set_root_config()
+        self._frame = None
 
+        # Подготавливаем массив слов для изучения из файла English_dictionary.csv
+        self.csv_reader()
 
-def csv_reader() -> (dict, str):
-    """
-    Получения списка вссех слов и последних 10ти добавленных
-    """
+        self.switch_frame(StartPage)
 
-    english_dict = {}
-    csv_path = "English_dictionary.csv"
+    def switch_frame(self, frame_class):
+        """ Destroys current frame and replaces it with a new one. """
+        new_frame = frame_class(self)
+        if self._frame is not None:
+            self._frame.destroy()
+        self._frame = new_frame
+        self._frame.pack(fill=tkinter.BOTH, expand=True)
 
-    last_ten_words = []
-    with open(csv_path, "r") as csv_file:
-        reader = csv.DictReader(csv_file, delimiter=';')
-        for row in reader:
-            english_dict[row['key']] = row
-            last_ten_words.append(row['key'])
+    def set_root_config(self):
+        """
+        Заполнение конфигурации для корневого окна (root)
+        """
+        self.background_color = '#669999'
+        self.title('Time For English')
 
-    if english_dict:
-        last_ten_words = "\n".join([word + ' -> ' + english_dict[word].get('translate', '').lower() for word in last_ten_words[-10:]])
-        return english_dict, last_ten_words
-    else:
-        raise Exception('Нет данных для изучения - файл English_dictionary.csv')
+        # Запрещаем пользователю менять размеры окна!
+        self.resizable(False, False)
 
+        # для особенных
+        self.protocol('WM_DELETE_WINDOW', self._window_deleted)  # обработчик закрытия окна
 
-def close_button_func():
-    """
-    Реализация кнопки "Close"
-    """
-    root.quit()
+        # Установка цвета фона окна
+        self.configure(background=self.background_color)
 
+        # Размеры экрана
+        screen_width = self.winfo_screenwidth()  # ширина экрана
+        screen_height = self.winfo_screenheight()  # высота экрана
 
-def change(event=None):
-    """
-    Проверка введенного пользователем значения перевода
-    """
+        width = screen_width // 2  # середина экрана
+        height = screen_height // 2
+        width -= 450  # смещение от середины
+        height -= 350
+        self.geometry('900x700+{}+{}'.format(width, height))
 
-    global MISTAKE
-    key = label['text']
-    key_result = english_dict.get(key, {})
-    translate = key_result.get('translate', '').lower()
-    answer = entry.get().lower()
-    print(answer, ' -> ', translate)
+    @staticmethod
+    def _window_deleted():
+        from tkinter import messagebox
+        messagebox.showwarning("Блять", 'Блять! ВЕРА! Для кого кнопка "Close"???')
+        root.quit()
 
-    if answer == translate:
-        example_text['text'] = key_result.get('example_text')
+    def csv_reader(self) -> (dict, str):
+        """
+        Получения списка вссех слов и последних 10ти добавленных
+        """
 
-        # если примера текста нет, то в верхний блок примеров встанет вопрос
-        if not example_text['text']:
-            example_text['text'] = key_result.get('example_question')
+        self.english_dict = {}
+        self.irregular_verbs_dict = {}
+        csv_path = "English_dictionary.csv"
+
+        last_ten_words = []
+        with open(csv_path, "r") as csv_file:
+            reader = csv.DictReader(csv_file, delimiter=';')
+            for row in reader:
+                if row['irregular_verbs']:
+                    self.irregular_verbs_dict[row['key']] = row
+                else:
+                    self.english_dict[row['key']] = row
+                    last_ten_words.append(row['key'])
+
+        if self.english_dict:
+            self.last_ten_words = "\n".join(
+                [word + ' -> ' + self.english_dict[word].get('translate', '').lower() for word in last_ten_words[-10:]])
+
+            print('Общее количество записей в файле -', len(self.english_dict) + len(self.irregular_verbs_dict), '\n')
+            print(self.last_ten_words)
         else:
-            example_question['text'] = key_result.get('example_question')
+            raise Exception('Нет данных для изучения - файл English_dictionary.csv')
 
-        info_label['text'] = 'I knew you could do it!'
-        info_label.config(fg='white')
-        entry.config(fg='black')
 
-        # Если пользователь совершил ошибку, слово не считается пройденным
-        if not MISTAKE:
-            del english_dict[key]
-        MISTAKE = False
+class StartPage(tkinter.Frame):
+    def __init__(self, master):
+        tkinter.Frame.__init__(self, master)
+        self.configure(background=master.background_color)
 
-        if not english_dict:
-            root.after(5000, root.quit())
+        # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
+        info_frame_top = tkinter.Frame(self, background=master.background_color)
+        example_text_frame = tkinter.Frame(self, background=master.background_color)
+        example_question_frame = tkinter.Frame(self, background=master.background_color)
+        frame_top = tkinter.Frame(self)
 
-        # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
-        if example_text['text']:
-            check_button.after(3000, new_text_message)
+        last_ten_words_button = tkinter.Button(self, text="Last 10 words added", font="Arial 12",
+                                               command=lambda: master.switch_frame(PageOne))
+
+        last_ten_words_button.pack(side=tkinter.TOP, padx=10, pady=10)
+
+        info_frame_top.pack(fill=tkinter.X)
+        frame_top.pack()
+        frame_top.place(rely=0.4, relx=0.08)
+        example_text_frame.pack(fill=tkinter.X)
+        example_text_frame.place(rely=0.5, relx=0.1)
+        example_question_frame.pack(fill=tkinter.X)
+        example_question_frame.place(rely=0.54, relx=0.1)
+
+        self.info_label = tkinter.Label(info_frame_top)
+        self.info_label.config(fg='white', height=2, width=150, font="Arial 16",
+                               background=master.background_color, text='You need to study more!')
+        self.info_label.place(relx=0.5, rely=0.5)
+
+        self.label = tkinter.Label(frame_top)
+        self.label.config(fg='black', height=2, width=45, font="Arial 12")
+        self.label['text'] = random.choice(list(master.english_dict.keys()))
+        self.label.place(relx=0.5, rely=0.5)
+
+        self.example_text = tkinter.Label(example_text_frame)
+        self.example_text.config(height=1, width=50, font="Purisa 18", background=master.background_color, fg='white')
+
+        self.example_question = tkinter.Label(example_question_frame)
+        self.example_question.config(height=1, width=50, font="Purisa 18", background=master.background_color,
+                                     fg='white')
+
+        # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
+        self.entry = tkinter.Entry(frame_top, width=20, font="Arial 12")
+        # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
+        self.entry.bind("<Return>", self.change)
+        self.entry.focus()
+
+        self.check_button = tkinter.Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
+        self.check_button.config(command=self.change)
+
+        close_button = tkinter.Button(text="Close", font="Arial 12")
+        close_button.config(command=self._close_button_func)
+
+        self.info_label.pack(side=tkinter.BOTTOM, padx=10, pady=10)
+        self.example_text.pack(padx=10)
+        self.example_question.pack(padx=10)
+
+        self.label.pack(side=tkinter.LEFT, padx=10, pady=10)
+        self.entry.pack(side=tkinter.LEFT, padx=10, pady=10)
+        self.check_button.pack(side=tkinter.LEFT, padx=10, pady=10)
+        close_button.pack(padx=5, pady=5)
+        close_button.place(relx=0.90, rely=0.90)
+
+        self.timer = tkinter.Label(self, text="%s:%s:%s" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white',
+                                   background=master.background_color)
+        self.timer.pack()
+        self.timer.after_idle(self.tick)
+
+    def tick(self):
+        global SECOND, MINUTE, HOUR
+        # Через каждую секунду происходит рекурсивый вызов функции
+        self.timer.after(1000, self.tick)
+        SECOND += 1
+        if SECOND == 59:
+            MINUTE += 1
+            SECOND = -1
+        elif MINUTE == 59:
+            HOUR += 1
+            MINUTE = -1
+        self.timer['text'] = "%s:%s:%s" % (HOUR, MINUTE, SECOND)
+
+    def _close_button_func(self):
+        """
+        Реализация кнопки "Close"
+        """
+        self.quit()
+
+    def change(self, event=None):
+        """
+        Проверка введенного пользователем значения перевода
+        """
+
+        global MISTAKE
+        key = self.label['text']
+        key_result = self.master.english_dict.get(key, {})
+        translate = key_result.get('translate', '').lower()
+        answer = self.entry.get().lower()
+        print(answer, ' -> ', translate)
+
+        if answer == translate:
+            self.example_text['text'] = key_result.get('example_text')
+
+            # если примера текста нет, то в верхний блок примеров встанет вопрос
+            if not self.example_text['text']:
+                self.example_text['text'] = key_result.get('example_question')
+            else:
+                self.example_question['text'] = key_result.get('example_question')
+
+            self.info_label['text'] = 'I knew you could do it!'
+            self.info_label.config(fg='white')
+            self.entry.config(fg='black')
+
+            # Если пользователь совершил ошибку, слово не считается пройденным
+            if not MISTAKE:
+                del self.master.english_dict[key]
+            MISTAKE = False
+
+            if not self.master.english_dict:
+                root.after(5000, root.quit())
+
+            # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
+            if self.example_text['text']:
+                self.check_button.after(3000, self.new_text_message)
+            else:
+                self.new_text_message()
+            self.entry.delete(0, tkinter.END)
         else:
-            new_text_message()
-        entry.delete(0, tkinter.END)
-    else:
-        MISTAKE = True
-        entry.config(fg='#CC3366')
-        info_label['text'] = 'Turn on your brain!'
-        info_label.config(fg='#993333')
+            MISTAKE = True
+            self.entry.config(fg='#CC3366')
+            self.info_label['text'] = 'Turn on your brain!'
+            self.info_label.config(fg='#993333')
+
+    def new_text_message(self):
+        self.label['text'] = random.choice(list(self.master.english_dict.keys()))
 
 
-def new_text_message():
-    label['text'] = random.choice(list(english_dict.keys()))
+class PageOne(tkinter.Frame):
+    def __init__(self, master):
+        tkinter.Frame.__init__(self, master)
+        self.configure(background=master.background_color)
 
+        last_ten_words_button = tkinter.Button(self, text="Testing page", font="Arial 12",
+                                               command=lambda: master.switch_frame(StartPage))
 
-def set_root_config() -> tkinter.Tk:
-    """
-    Создание и заполнение конфигурации для корневого окна (root)
-    """
-    root = tkinter.Tk()
-    root.title('Time For English')
+        last_ten_words_button.pack(side=tkinter.TOP, padx=10, pady=10)
 
-    # Запрещаем пользователю менять размеры окна!
-    root.resizable(False, False)
-
-    # для особенных
-    root.protocol('WM_DELETE_WINDOW', window_deleted)  # обработчик закрытия окна
-
-    # Установка цвета фона окна
-    root.configure(background=background_color)
-
-    # Размеры экрана
-    screen_width = root.winfo_screenwidth()  # ширина экрана
-    screen_height = root.winfo_screenheight()  # высота экрана
-
-    width = screen_width // 2  # середина экрана
-    height = screen_height // 2
-    width -= 450  # смещение от середины
-    height -= 350
-    root.geometry('900x700+{}+{}'.format(width, height))
-    return root
-
-
-def tick():
-    global SECOND, MINUTE, HOUR
-    # Через каждую секунду происходит рекурсивый вызов функции
-    timer.after(1000, tick)
-    SECOND += 1
-    if SECOND == 59:
-        MINUTE += 1
-        SECOND = -1
-    elif MINUTE == 59:
-        HOUR += 1
-        MINUTE = -1
-    timer['text'] = "%s:%s:%s" % (HOUR, MINUTE, SECOND)
-
-
-def check_last_ten_words():
-    if not 0:
-        # info_frame_top.destroy()
-        last_ten_words_frame = tkinter.LabelFrame(root, background=background_color, text='Last 10 words added', fg='red', font="Arial 14")
+        last_ten_words_frame = tkinter.LabelFrame(self, background=master.background_color, text='Last 10 words added',
+                                                  fg='red', font="Arial 14")
         last_ten_words_frame.pack(fill="both", expand="yes")
-        # last_ten_words_frame.place(rely=0.1, relx=0.01)
 
         ten_words = tkinter.Label(last_ten_words_frame)
         ten_words.config(fg='white', height=10, width=50, font="Arial 14",
-                          background=background_color, text=last_ten_words)
+                         background=master.background_color, text=master.last_ten_words)
         ten_words.pack()
 
 
 if __name__ == '__main__':
-    background_color = '#669999'
-
-    # Подготавливаем массив слов для изучения из файла English_dictionary.csv
-    english_dict, last_ten_words = csv_reader()
-    print(len(last_ten_words))
-    print(last_ten_words)
-    # Создаем основное окно программы
-    root = set_root_config()
-
-    # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
-    info_frame_top = tkinter.Frame(root, background=background_color)
-    example_text_frame = tkinter.Frame(root, background=background_color)
-    example_question_frame = tkinter.Frame(root, background=background_color)
-    frame_top = tkinter.Frame(root)
-
-    last_ten_words_button = tkinter.Button(text="Last 10 words added", font="Arial 12")
-    last_ten_words_button.config(command=check_last_ten_words)
-
-    last_ten_words_button.pack(side=tkinter.TOP, padx=10, pady=10)
-
-    info_frame_top.pack(fill=tkinter.X)
-    frame_top.pack()
-    frame_top.place(rely=0.4, relx=0.08)
-    example_text_frame.pack(fill=tkinter.X)
-    example_text_frame.place(rely=0.5, relx=0.1)
-    example_question_frame.pack(fill=tkinter.X)
-    example_question_frame.place(rely=0.54, relx=0.1)
-
-    info_label = tkinter.Label(info_frame_top)
-    info_label.config(fg='white', height=2, width=150, font="Arial 16",
-                      background=background_color, text='You need to study more!')
-    info_label.place(relx=0.5, rely=0.5)
-
-    label = tkinter.Label(frame_top)
-    label.config(fg='black', height=2, width=45, font="Arial 12")
-    label['text'] = random.choice(list(english_dict.keys()))
-    label.place(relx=0.5, rely=0.5)
-
-    example_text = tkinter.Label(example_text_frame)
-    example_text.config(height=1, width=50, font="Purisa 18", background=background_color, fg='white')
-
-    example_question = tkinter.Label(example_question_frame)
-    example_question.config(height=1, width=50, font="Purisa 18", background=background_color, fg='white')
-
-    # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
-    entry = tkinter.Entry(frame_top, width=20, font="Arial 12")
-    # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
-    entry.bind("<Return>", change)
-    entry.focus()
-
-    check_button = tkinter.Button(frame_top, text="Проверить", width=10, height=1, font="Arial 12")
-    check_button.config(command=change)
-
-    close_button = tkinter.Button(text="Close", font="Arial 12")
-    close_button.config(command=close_button_func)
-
-    info_label.pack(side=tkinter.BOTTOM, padx=10, pady=10)
-    example_text.pack(padx=10)
-    example_question.pack(padx=10)
-
-    label.pack(side=tkinter.LEFT, padx=10, pady=10)
-    entry.pack(side=tkinter.LEFT, padx=10, pady=10)
-    check_button.pack(side=tkinter.LEFT, padx=10, pady=10)
-    close_button.pack(padx=5, pady=5)
-    close_button.place(relx=0.90, rely=0.90)
-
-    timer = tkinter.Label(text="%s:%s:%s" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white', background=background_color)
-    timer.pack()
-    timer.after_idle(tick)
-
+    root = SampleApp()
     root.mainloop()
