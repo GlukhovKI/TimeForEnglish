@@ -12,16 +12,44 @@ class SampleApp(tkinter.Tk):
         self.set_root_config()
         self._frame = None
 
+        # TODO что то придумать с БД и заменить это говно (работа с файлом csv)
         # Подготавливаем массив слов для изучения из файла English_dictionary.csv
         self.csv_reader()
 
+        menu_frame = tkinter.Frame(self, background=self.background_color)
+        last_ten_words_button = tkinter.Button(menu_frame, text="Testing Page", font="Arial 12",
+                                               command=lambda: self.switch_frame(StartPage))
+
+        last_ten_words_button.pack(side=tkinter.LEFT, padx=10, pady=10)
+
+        last_ten_words_button = tkinter.Button(menu_frame, text="Last 10 Words Added", font="Arial 12",
+                                               command=lambda: self.switch_frame(PageOne))
+
+        last_ten_words_button.pack(side=tkinter.LEFT, padx=10, pady=10)
+
+        last_ten_words_button1 = tkinter.Button(menu_frame, text="Irregular Verbs", font="Arial 12",
+                                               command=lambda: self.switch_frame(PageTwo))
+
+        last_ten_words_button1.pack(side=tkinter.LEFT, padx=10, pady=10)
+
+        menu_frame.pack(fill=tkinter.X)
         self.switch_frame(StartPage)
 
     def switch_frame(self, frame_class):
         """ Destroys current frame and replaces it with a new one. """
+
+        # проверка на повторное нажатие кнопки возврата к окну, в котором находишься,
+        # при этом не нужно создавать окно заново
+        if self._frame and self._frame.__class__.__name__ == frame_class.__name__:
+            return
+
+        # создаем новый виджет
         new_frame = frame_class(self)
+
+        # удаляем старый
         if self._frame is not None:
             self._frame.destroy()
+
         self._frame = new_frame
         self._frame.pack(fill=tkinter.BOTH, expand=True)
 
@@ -57,12 +85,18 @@ class SampleApp(tkinter.Tk):
         messagebox.showwarning("Блять", 'Блять! ВЕРА! Для кого кнопка "Close"???')
         root.quit()
 
+    def _close_button_func(self):
+        """
+        Реализация кнопки "Close"
+        """
+        self.quit()
+
     def csv_reader(self) -> (dict, str):
         """
         Получения списка вссех слов и последних 10ти добавленных
         """
 
-        self.english_dict = {}
+        self.words_dict = {}
         self.irregular_verbs_dict = {}
         csv_path = "English_dictionary.csv"
 
@@ -73,14 +107,14 @@ class SampleApp(tkinter.Tk):
                 if row['irregular_verbs']:
                     self.irregular_verbs_dict[row['key']] = row
                 else:
-                    self.english_dict[row['key']] = row
+                    self.words_dict[row['key']] = row
                     last_ten_words.append(row['key'])
 
-        if self.english_dict:
+        if self.words_dict:
             self.last_ten_words = "\n".join(
-                [word + ' -> ' + self.english_dict[word].get('translate', '').lower() for word in last_ten_words[-10:]])
+                [word + ' -> ' + self.words_dict[word].get('translate', '').lower() for word in last_ten_words[-10:]])
 
-            print('Общее количество записей в файле -', len(self.english_dict) + len(self.irregular_verbs_dict), '\n')
+            print('Общее количество записей в файле -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
             print(self.last_ten_words)
         else:
             raise Exception('Нет данных для изучения - файл English_dictionary.csv')
@@ -97,11 +131,6 @@ class StartPage(tkinter.Frame):
         example_question_frame = tkinter.Frame(self, background=master.background_color)
         frame_top = tkinter.Frame(self)
 
-        last_ten_words_button = tkinter.Button(self, text="Last 10 words added", font="Arial 12",
-                                               command=lambda: master.switch_frame(PageOne))
-
-        last_ten_words_button.pack(side=tkinter.TOP, padx=10, pady=10)
-
         info_frame_top.pack(fill=tkinter.X)
         frame_top.pack()
         frame_top.place(rely=0.4, relx=0.08)
@@ -117,7 +146,7 @@ class StartPage(tkinter.Frame):
 
         self.label = tkinter.Label(frame_top)
         self.label.config(fg='black', height=2, width=45, font="Arial 12")
-        self.label['text'] = random.choice(list(master.english_dict.keys()))
+        self.label['text'] = random.choice(list(master.words_dict.keys()))
         self.label.place(relx=0.5, rely=0.5)
 
         self.example_text = tkinter.Label(example_text_frame)
@@ -137,7 +166,7 @@ class StartPage(tkinter.Frame):
         self.check_button.config(command=self.change)
 
         close_button = tkinter.Button(text="Close", font="Arial 12")
-        close_button.config(command=self._close_button_func)
+        close_button.config(command=master._close_button_func)
 
         self.info_label.pack(side=tkinter.BOTTOM, padx=10, pady=10)
         self.example_text.pack(padx=10)
@@ -167,12 +196,6 @@ class StartPage(tkinter.Frame):
             MINUTE = -1
         self.timer['text'] = "%s:%s:%s" % (HOUR, MINUTE, SECOND)
 
-    def _close_button_func(self):
-        """
-        Реализация кнопки "Close"
-        """
-        self.quit()
-
     def change(self, event=None):
         """
         Проверка введенного пользователем значения перевода
@@ -180,7 +203,7 @@ class StartPage(tkinter.Frame):
 
         global MISTAKE
         key = self.label['text']
-        key_result = self.master.english_dict.get(key, {})
+        key_result = self.master.words_dict.get(key, {})
         translate = key_result.get('translate', '').lower()
         answer = self.entry.get().lower()
         print(answer, ' -> ', translate)
@@ -200,10 +223,10 @@ class StartPage(tkinter.Frame):
 
             # Если пользователь совершил ошибку, слово не считается пройденным
             if not MISTAKE:
-                del self.master.english_dict[key]
+                del self.master.words_dict[key]
             MISTAKE = False
 
-            if not self.master.english_dict:
+            if not self.master.words_dict:
                 root.after(5000, root.quit())
 
             # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
@@ -219,18 +242,13 @@ class StartPage(tkinter.Frame):
             self.info_label.config(fg='#993333')
 
     def new_text_message(self):
-        self.label['text'] = random.choice(list(self.master.english_dict.keys()))
+        self.label['text'] = random.choice(list(self.master.words_dict.keys()))
 
 
 class PageOne(tkinter.Frame):
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
-
-        last_ten_words_button = tkinter.Button(self, text="Testing page", font="Arial 12",
-                                               command=lambda: master.switch_frame(StartPage))
-
-        last_ten_words_button.pack(side=tkinter.TOP, padx=10, pady=10)
 
         last_ten_words_frame = tkinter.LabelFrame(self, background=master.background_color, text='Last 10 words added',
                                                   fg='red', font="Arial 14")
@@ -240,6 +258,33 @@ class PageOne(tkinter.Frame):
         ten_words.config(fg='white', height=10, width=50, font="Arial 14",
                          background=master.background_color, text=master.last_ten_words)
         ten_words.pack()
+
+        close_button = tkinter.Button(self, text="Close", font="Arial 12")
+        close_button.config(command=master._close_button_func)
+
+        close_button.pack(padx=5, pady=5)
+        close_button.place(relx=0.90, rely=0.90)
+
+
+class PageTwo(tkinter.Frame):
+    def __init__(self, master):
+        tkinter.Frame.__init__(self, master)
+        self.configure(background=master.background_color)
+
+        last_ten_words_frame = tkinter.LabelFrame(self, background=master.background_color, text='Last 10 words added',
+                                                  fg='red', font="Arial 14")
+        last_ten_words_frame.pack(fill="both", expand="yes")
+
+        ten_words = tkinter.Label(last_ten_words_frame)
+        ten_words.config(fg='white', height=10, width=50, font="Arial 14",
+                         background=master.background_color, text=master.last_ten_words)
+        ten_words.pack()
+
+        close_button = tkinter.Button(self, text="Close", font="Arial 12")
+        close_button.config(command=master._close_button_func)
+
+        close_button.pack(padx=5, pady=5)
+        close_button.place(relx=0.90, rely=0.90)
 
 
 if __name__ == '__main__':
