@@ -128,6 +128,7 @@ class SampleApp(tkinter.Tk):
                     print(row)
                     self.irregular_verbs_dict[row['key']] = row
                 else:
+                    print(row)
                     self.words_dict[row['key']] = row
                     last_ten_words.append(row['key'])
 
@@ -177,10 +178,10 @@ class StartPage(tkinter.Frame):
                                      fg='white')
 
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
-        self.entry = tkinter.Entry(frame_top, width=20, font="Arial 12", fg='grey')
+        self.entry = tkinter.Entry(frame_top, width=20, font="Arial 12", fg='black')
         # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
-        # self.entry.bind("<Return>", self.change)
-        self.default_entry_color = 'black'
+        self.entry.bind("<Return>", self.change)
+        # self.default_entry_color = 'black'
         # master.put_placeholder(self.entry, 'ewrwerw')
         # self.entry.bind("<FocusIn>", master.focus_in(self.entry, self.default_entry_color))
         # self.entry.bind("<FocusOut>", master.focus_out(self.entry, 'ghjsdg'))
@@ -237,6 +238,7 @@ class StartPage(tkinter.Frame):
             # если примера текста нет, то в верхний блок примеров встанет вопрос
             if not self.example_text['text']:
                 self.example_text['text'] = key_result.get('example_question')
+                self.example_question['text'] = ''
             else:
                 self.example_question['text'] = key_result.get('example_question')
 
@@ -254,6 +256,7 @@ class StartPage(tkinter.Frame):
 
             # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
             if self.example_text['text']:
+                print('вывели пример текста')
                 self.check_button.after(3000, self.new_text_message)
             else:
                 self.new_text_message()
