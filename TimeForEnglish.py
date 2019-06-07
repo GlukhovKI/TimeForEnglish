@@ -132,12 +132,11 @@ class StartPage(tkinter.Frame):
         frame_top = tkinter.Frame(self)
 
         info_frame_top.pack(fill=tkinter.X)
-        frame_top.pack()
-        frame_top.place(rely=0.4, relx=0.08)
+        frame_top.place(rely=0.3, relx=0.08)
         example_text_frame.pack(fill=tkinter.X)
-        example_text_frame.place(rely=0.5, relx=0.1)
+        example_text_frame.place(rely=0.55, relx=0.1)
         example_question_frame.pack(fill=tkinter.X)
-        example_question_frame.place(rely=0.54, relx=0.1)
+        example_question_frame.place(rely=0.6, relx=0.1)
 
         self.info_label = tkinter.Label(info_frame_top)
         self.info_label.config(fg='white', height=2, width=150, font="Arial 16",
@@ -145,7 +144,7 @@ class StartPage(tkinter.Frame):
         self.info_label.place(relx=0.5, rely=0.5)
 
         self.label = tkinter.Label(frame_top)
-        self.label.config(fg='black', height=2, width=45, font="Arial 12")
+        self.label.config(fg='black', height=3, width=45, font="Arial 12")
         self.label['text'] = random.choice(list(master.words_dict.keys()))
         self.label.place(relx=0.5, rely=0.5)
 
@@ -251,7 +250,7 @@ class PageOne(tkinter.Frame):
         self.configure(background=master.background_color)
 
         last_ten_words_frame = tkinter.LabelFrame(self, background=master.background_color, text='Last 10 words added',
-                                                  fg='red', font="Arial 14")
+                                                  fg='#993333', font="Arial 14")
         last_ten_words_frame.pack(fill="both", expand="yes")
 
         ten_words = tkinter.Label(last_ten_words_frame)
@@ -272,7 +271,7 @@ class PageTwo(tkinter.Frame):
         self.configure(background=master.background_color)
 
         last_ten_words_frame = tkinter.LabelFrame(self, background=master.background_color, text='Last 10 words added',
-                                                  fg='red', font="Arial 14")
+                                                  fg='#000033', font="Arial 14")
         last_ten_words_frame.pack(fill="both", expand="yes")
 
         ten_words = tkinter.Label(last_ten_words_frame)
