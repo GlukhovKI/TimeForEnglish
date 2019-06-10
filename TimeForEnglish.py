@@ -154,9 +154,9 @@ class StartPage(tkinter.Frame):
         frame_top = tkinter.Frame(self)
 
         info_frame_top.pack(fill=tkinter.X)
-        frame_top.place(rely=0.4, relx=0.08)
+        frame_top.place(rely=0.3, relx=0.08)
         example_text_frame.pack(fill=tkinter.X)
-        example_text_frame.place(rely=0.55, relx=0.1)
+        example_text_frame.place(rely=0.5, relx=0.1)
         example_question_frame.pack(fill=tkinter.X)
         example_question_frame.place(rely=0.6, relx=0.1)
 
