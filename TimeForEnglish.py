@@ -121,7 +121,7 @@ class SampleApp(tkinter.Tk):
     @staticmethod
     def _window_deleted():
         from tkinter import messagebox
-        messagebox.showwarning("Блять", 'Блять! ВЕРА! Для кого кнопка "Close"???')
+        messagebox.showwarning("Блять", 'Блять! Два дебила! Для кого кнопка "Close"???')
         root.quit()
 
     def close_button_func(self):
@@ -162,6 +162,9 @@ class SampleApp(tkinter.Tk):
 
 
 class StartPage(tkinter.Frame):
+    """
+    Стартовая страница для ввода слова
+    """
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
@@ -277,24 +280,28 @@ class StartPage(tkinter.Frame):
 
 
 class PageOne(tkinter.Frame):
+    """
+        Страница для вывода последних 10 слов
+    """
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
 
         last_ten_words_frame = tkinter.LabelFrame(self,
                                                   background=master.background_color,
-                                                  text='Last 10 words added',
-                                                  fg='#993333',
-                                                  font="Arial 14")
+                                                  )
         last_ten_words_frame.grid(column=0, row=0, padx=10, pady=10, ipadx=40, ipady=10)
 
         ten_words = tkinter.Label(last_ten_words_frame)
-        ten_words.config(fg='white', font="Arial 14",
+        ten_words.config(fg='white', font="Arial 21",
                          background=master.background_color, text=master.last_ten_words)
         ten_words.pack()
 
 
 class PageTwo(tkinter.Frame):
+    """
+      Страница для ввода неправильных глаголов
+    """
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
