@@ -2,7 +2,7 @@ import csv
 import random
 import tkinter
 
-SECOND = MINUTE = HOUR = 0
+SECOND = MINUTE = HOUR = 00
 MISTAKE = False
 
 
@@ -20,24 +20,24 @@ class SampleApp(tkinter.Tk):
         menu_frame = tkinter.Frame(self, background=self.background_color)
         menu_frame.grid(column=0, row=0, columnspan=7)
         last_ten_words_button = tkinter.Button(menu_frame, text="Testing Page", font="Arial 12",
-                                               command=lambda: self.switch_frame(StartPage))
+                                               command=lambda: self.switch_frame(MainPage))
 
         last_ten_words_button.grid(column=0, row=0, padx=10, pady=10)
 
         last_ten_words_button = tkinter.Button(menu_frame, text="Last 10 Words Added", font="Arial 12",
-                                               command=lambda: self.switch_frame(PageOne))
+                                               command=lambda: self.switch_frame(TenWordsPage))
 
         last_ten_words_button.grid(column=1, row=0, padx=10, pady=10)
 
-        last_ten_words_button1 = tkinter.Button(menu_frame, text="Irregular Verbs", font="Arial 12",
-                                               command=lambda: self.switch_frame(PageTwo))
+        irregular_words_button = tkinter.Button(menu_frame, text="Irregular Verbs", font="Arial 12",
+                                               command=lambda: self.switch_frame(IrregularVerbsPage))
 
-        last_ten_words_button1.grid(column=2, row=0, padx=10, pady=10)
+        irregular_words_button.grid(column=2, row=0, padx=10, pady=10)
 
         close_button = tkinter.Button(text="Close", font="Arial 12")
         close_button.config(command=self.close_button_func)
         close_button.grid(column=6, row=4, padx=10, pady=10)
-        self.switch_frame(StartPage)
+        self.switch_frame(IrregularVerbsPage)
 
     @staticmethod
     def put_placeholder(entry_, text_):
@@ -74,7 +74,7 @@ class SampleApp(tkinter.Tk):
             self._frame.destroy()
 
         self._frame = new_frame
-        self._frame.grid(column=1, row=1, columnspan=6, rowspan=3)
+        self._frame.grid(column=1, row=1, columnspan=6, rowspan=3, sticky=tkinter.N)
 
     def set_root_config(self):
         """
@@ -106,7 +106,7 @@ class SampleApp(tkinter.Tk):
         self.columnconfigure(5, weight=160)
         self.columnconfigure(6, weight=50)
 
-        self.rowconfigure(0, pad=20)
+        self.rowconfigure(0, weight=50)
         self.rowconfigure(1, weight=217)
         self.rowconfigure(2, weight=217)
         self.rowconfigure(3, weight=217)
@@ -132,7 +132,7 @@ class SampleApp(tkinter.Tk):
 
     def csv_reader(self) -> (dict, str):
         """
-        Получения списка вссех слов и последних 10ти добавленных
+        Получения списка всех слов и последних 10ти добавленных
         """
 
         self.words_dict = {}
@@ -161,7 +161,7 @@ class SampleApp(tkinter.Tk):
             raise Exception('Нет данных для изучения - файл English_dictionary.csv')
 
 
-class StartPage(tkinter.Frame):
+class MainPage(tkinter.Frame):
     """
     Стартовая страница для ввода слова
     """
@@ -174,29 +174,22 @@ class StartPage(tkinter.Frame):
                                font="Arial 16",
                                background=master.background_color,
                                text='You need to study more!')
-        self.info_label.grid(column=0, row=0, padx=10, pady=10)
 
         # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
-        frame_top = tkinter.Frame(self)
-        frame_top.grid(column=0, row=2, padx=10, pady=10)
+        self.frame_top = tkinter.Frame(self)
 
-        self.label = tkinter.Label(frame_top)
+        self.label = tkinter.Label(self.frame_top)
         self.label.config(fg='black', font="Arial 14", width=30)
         self.label['text'] = random.choice(list(master.words_dict.keys()))
-        self.label.grid(column=0, row=1, padx=10, pady=10)
-        tkinter.Label(frame_top).grid(column=0, row=0, padx=10, pady=10)
-        tkinter.Label(frame_top).grid(column=0, row=2, padx=10, pady=10)
 
         self.example_text = tkinter.Label(self)
         self.example_text.config(font="Purisa 18", background=master.background_color, fg='white')
-        self.example_text.grid(column=0, row=3, padx=10, pady=10)
 
         self.example_question = tkinter.Label(self)
         self.example_question.config(font="Purisa 18", background=master.background_color, fg='white')
-        self.example_question.grid(column=0, row=4, padx=10, pady=10)
 
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
-        self.entry = tkinter.Entry(frame_top, width=25, font="Arial 12", fg='black')
+        self.entry = tkinter.Entry(self.frame_top, width=25, font="Arial 12", fg='black')
         # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
         self.entry.bind("<Return>", self.change)
         # self.default_entry_color = 'black'
@@ -204,16 +197,30 @@ class StartPage(tkinter.Frame):
         # self.entry.bind("<FocusIn>", master.focus_in(self.entry, self.default_entry_color))
         # self.entry.bind("<FocusOut>", master.focus_out(self.entry, 'ghjsdg'))
         self.entry.focus()
-        self.entry.grid(column=1, row=1, padx=10, pady=10)
 
-        self.check_button = tkinter.Button(frame_top, text="Проверить", font="Arial 12", width=15)
+        self.check_button = tkinter.Button(self.frame_top, text="Проверить", font="Arial 12", width=15)
         self.check_button.config(command=self.change)
-        self.check_button.grid(column=3, row=1, padx=10, pady=10)
 
         self.timer = tkinter.Label(self, text="%s:%s:%s" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white',
                                    background=master.background_color)
-        self.timer.grid(column=0, row=1, padx=10, pady=10)
         self.timer.after_idle(self.tick)
+
+        # Блок для ввода слова (frame_top)
+        tkinter.Label(self.frame_top).grid(column=0, row=0, padx=10, pady=10)
+        self.label.grid(column=0, row=1, padx=10, pady=10)
+        self.entry.grid(column=1, row=1, padx=10, pady=10)
+        self.check_button.grid(row=1, column=3, padx=10, pady=10)
+        tkinter.Label(self.frame_top).grid(column=0, row=2, padx=10, pady=10)
+
+        # Блок информационный (self)
+        tkinter.Label(self, background=master.background_color).grid(column=0, row=0, padx=10, pady=10)
+        self.info_label.grid(column=0, row=1, padx=10, pady=10)
+        tkinter.Label(self, background=master.background_color).grid(column=0, row=2, padx=10, pady=10)
+        self.timer.grid(column=0, row=3, padx=10, pady=10)
+        tkinter.Label(self, background=master.background_color).grid(column=0, row=4, padx=10, pady=10)
+        self.frame_top.grid(column=0, row=5, padx=10, pady=10)
+        self.example_text.grid(column=0, row=6, padx=10, pady=10)
+        self.example_question.grid(column=0, row=7, padx=10, pady=10)
 
     def tick(self):
         global SECOND, MINUTE, HOUR
@@ -279,7 +286,7 @@ class StartPage(tkinter.Frame):
         self.label['text'] = random.choice(list(self.master.words_dict.keys()))
 
 
-class PageOne(tkinter.Frame):
+class TenWordsPage(tkinter.Frame):
     """
         Страница для вывода последних 10 слов
     """
@@ -287,18 +294,19 @@ class PageOne(tkinter.Frame):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
 
-        last_ten_words_frame = tkinter.LabelFrame(self,
+        self.last_ten_words_frame = tkinter.LabelFrame(self,
                                                   background=master.background_color,
                                                   )
-        last_ten_words_frame.grid(column=0, row=0, padx=10, pady=10, ipadx=40, ipady=10)
 
-        ten_words = tkinter.Label(last_ten_words_frame)
-        ten_words.config(fg='white', font="Arial 21",
+        self.ten_words = tkinter.Label(self.last_ten_words_frame)
+        self.ten_words.config(fg='white', font="Arial 21",
                          background=master.background_color, text=master.last_ten_words)
-        ten_words.pack()
 
+        tkinter.Label(self, background=master.background_color).grid(column=0, row=0, padx=10, pady=10)
+        self.last_ten_words_frame.grid(column=0, row=1, padx=10, pady=10, ipadx=40, ipady=10)
+        self.ten_words.pack()
 
-class PageTwo(tkinter.Frame):
+class IrregularVerbsPage(tkinter.Frame):
     """
       Страница для ввода неправильных глаголов
     """
