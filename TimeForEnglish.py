@@ -2,21 +2,16 @@ import csv
 import random
 import tkinter
 
-SECOND = MINUTE = HOUR = 0
+SECOND = MINUTE = HOUR = 00
 MISTAKE = False
 
 
 class SampleApp(tkinter.Tk):
     def __init__(self):
         tkinter.Tk.__init__(self)
-        self._frame = None
-        self.background_color = '#669999'
-        self.default_entry_color = 'black'
-
-        self.words_dict = {}
-        self.irregular_verbs_dict = {}
-
         self.set_root_config()
+        self._frame = None
+        self.default_entry_color = 'black'
 
         # TODO что то придумать с БД и заменить это говно (работа с файлом csv)
         # Подготавливаем массив слов для изучения из файла English_dictionary.csv
@@ -35,27 +30,14 @@ class SampleApp(tkinter.Tk):
         last_ten_words_button.grid(column=1, row=0, padx=10, pady=10)
 
         irregular_words_button = tkinter.Button(menu_frame, text="Irregular Verbs", font="Arial 12",
-                                                command=lambda: self.switch_frame(IrregularVerbsPage))
+                                               command=lambda: self.switch_frame(IrregularVerbsPage))
 
         irregular_words_button.grid(column=2, row=0, padx=10, pady=10)
-
-        self.random_word = random.choice(list(self.words_dict.keys()))
-        self.random_irregular_verb = random.choice(list(self.irregular_verbs_dict.keys()))
 
         close_button = tkinter.Button(text="Close", font="Arial 12")
         close_button.config(command=self.close_button_func)
         close_button.grid(column=6, row=4, padx=10, pady=10)
         self.switch_frame(IrregularVerbsPage)
-
-    def new_word(self) -> str:
-        """ Выбирает новое слово """
-        self.random_word = random.choice(list(self.irregular_verbs_dict.keys()))
-        return self.random_word
-
-    def new_verb(self) -> str:
-        """ Выбирает новый неправильный глагол """
-        self.random_irregular_verb = random.choice(list(self.irregular_verbs_dict.keys()))
-        return self.random_irregular_verb
 
     @staticmethod
     def put_placeholder(entry_, text_):
@@ -98,6 +80,7 @@ class SampleApp(tkinter.Tk):
         """
         Заполнение конфигурации для корневого окна (root)
         """
+        self.background_color = '#669999'
         self.title('Time For English')
 
         # Запрещаем пользователю менять размеры окна!
@@ -123,7 +106,7 @@ class SampleApp(tkinter.Tk):
         self.columnconfigure(5, weight=160)
         self.columnconfigure(6, weight=50)
 
-        self.rowconfigure(0, weight=20)
+        self.rowconfigure(0, weight=50)
         self.rowconfigure(1, weight=217)
         self.rowconfigure(2, weight=217)
         self.rowconfigure(3, weight=217)
@@ -147,11 +130,13 @@ class SampleApp(tkinter.Tk):
         """
         self.quit()
 
-    def csv_reader(self):
+    def csv_reader(self) -> (dict, str):
         """
         Получения списка всех слов и последних 10ти добавленных
         """
 
+        self.words_dict = {}
+        self.irregular_verbs_dict = {}
         csv_path = "English_dictionary.csv"
 
         last_ten_words = []
@@ -165,14 +150,13 @@ class SampleApp(tkinter.Tk):
                     print(row)
                     self.words_dict[row['key']] = row
                     last_ten_words.append(row['key'])
-            print()
 
         if self.words_dict:
             self.last_ten_words = "\n".join(
                 [word + ' -> ' + self.words_dict[word].get('translate', '').lower() for word in last_ten_words[-10:]])
 
             print('Общее количество записей в файле -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
-            print(self.last_ten_words, '\n')
+            print(self.last_ten_words)
         else:
             raise Exception('Нет данных для изучения - файл English_dictionary.csv')
 
@@ -181,7 +165,6 @@ class MainPage(tkinter.Frame):
     """
     Стартовая страница для ввода слова
     """
-
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
@@ -195,9 +178,9 @@ class MainPage(tkinter.Frame):
         # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
         self.frame_top = tkinter.Frame(self)
 
-        self.word = tkinter.Label(self.frame_top)
-        self.word.config(fg='black', font="Arial 14", width=30)
-        self.word['text'] = master.random_word
+        self.label = tkinter.Label(self.frame_top)
+        self.label.config(fg='black', font="Arial 14", width=30)
+        self.label['text'] = random.choice(list(master.words_dict.keys()))
 
         self.example_text = tkinter.Label(self)
         self.example_text.config(font="Purisa 18", background=master.background_color, fg='white')
@@ -224,7 +207,7 @@ class MainPage(tkinter.Frame):
 
         # Блок для ввода слова (frame_top)
         tkinter.Label(self.frame_top).grid(column=0, row=0, padx=10, pady=10)
-        self.word.grid(column=0, row=1, padx=10, pady=10)
+        self.label.grid(column=0, row=1, padx=10, pady=10)
         self.entry.grid(column=1, row=1, padx=10, pady=10)
         self.check_button.grid(row=1, column=3, padx=10, pady=10)
         tkinter.Label(self.frame_top).grid(column=0, row=2, padx=10, pady=10)
@@ -300,34 +283,33 @@ class MainPage(tkinter.Frame):
             self.info_label.config(fg='#993333')
 
     def new_text_message(self):
-        self.word['text'] = self.master.new_word()
+        self.label['text'] = random.choice(list(self.master.words_dict.keys()))
 
 
 class TenWordsPage(tkinter.Frame):
     """
-    Страница для вывода последних 10 слов
+        Страница для вывода последних 10 слов
     """
-
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
 
-        self.last_ten_words_frame = tkinter.LabelFrame(self, background=master.background_color)
+        self.last_ten_words_frame = tkinter.LabelFrame(self,
+                                                  background=master.background_color,
+                                                  )
 
         self.ten_words = tkinter.Label(self.last_ten_words_frame)
         self.ten_words.config(fg='white', font="Arial 21",
-                              background=master.background_color, text=master.last_ten_words)
+                         background=master.background_color, text=master.last_ten_words)
 
         tkinter.Label(self, background=master.background_color).grid(column=0, row=0, padx=10, pady=10)
         self.last_ten_words_frame.grid(column=0, row=1, padx=10, pady=10, ipadx=40, ipady=10)
         self.ten_words.pack()
 
-
 class IrregularVerbsPage(tkinter.Frame):
     """
-    Страница для ввода неправильных глаголов
+      Страница для ввода неправильных глаголов
     """
-
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
         self.configure(background=master.background_color)
@@ -343,10 +325,10 @@ class IrregularVerbsPage(tkinter.Frame):
         frame_top = tkinter.Frame(self)
         frame_top.grid(column=0, row=2, padx=10, pady=10)
 
-        self.irregular_verb = tkinter.Label(frame_top)
-        self.irregular_verb.config(fg='black', font="Arial 14", width=30)
-        self.irregular_verb['text'] = master.random_irregular_verb
-        self.irregular_verb.grid(column=0, row=1, padx=10, pady=10)
+        self.label = tkinter.Label(frame_top)
+        self.label.config(fg='black', font="Arial 14", width=30)
+        self.label['text'] = random.choice(list(master.irregular_verbs_dict.keys()))
+        self.label.grid(column=0, row=1, padx=10, pady=10)
 
         self.example_text = tkinter.Label(self)
         self.example_text.config(font="Purisa 18",
@@ -392,7 +374,7 @@ class IrregularVerbsPage(tkinter.Frame):
         """
 
         global MISTAKE
-        key = self.irregular_verb['text']
+        key = self.label['text']
         key_result = self.master.irregular_verbs_dict.get(key, {})
 
         translate_form_1 = key_result.get('translate', '').lower()
@@ -438,7 +420,6 @@ class IrregularVerbsPage(tkinter.Frame):
             self.entry_form_1.delete(0, tkinter.END)
             self.entry_form_2.delete(0, tkinter.END)
             self.entry_form_3.delete(0, tkinter.END)
-            self.entry_form_1.focus()
         else:
             MISTAKE = True
             self.entry_form_1.config(fg='#CC3366')
@@ -448,7 +429,7 @@ class IrregularVerbsPage(tkinter.Frame):
             self.info_label.config(fg='#993333')
 
     def new_text_message(self):
-        self.irregular_verb['text'] = self.master.new_verb()
+        self.label['text'] = random.choice(list(self.master.irregular_verbs_dict.keys()))
 
     def tick(self):
         global SECOND, MINUTE, HOUR
