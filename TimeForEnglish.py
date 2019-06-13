@@ -164,12 +164,12 @@ class SampleApp(tkinter.Tk):
                 else:
                     print(row)
                     self.words_dict[row['key']] = row
-                    last_ten_words.append(row['key'])
+                    last_ten_words.append((row['key'], row['translate']))
             print()
 
         if self.words_dict:
             self.last_ten_words = "\n".join(
-                [word + ' -> ' + self.words_dict[word].get('translate', '').lower() for word in last_ten_words[-10:]])
+                [key + ' -> ' + translate for key, translate in last_ten_words[-10:]])
 
             print('Общее количество записей в файле -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
             print(self.last_ten_words, '\n')
