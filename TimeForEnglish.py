@@ -42,7 +42,7 @@ class SampleApp(tkinter.Tk):
         self.random_word = random.choice(list(self.words_dict.keys()))
         self.random_irregular_verb = random.choice(list(self.irregular_verbs_dict.keys()))
 
-        close_button = tkinter.Button(text="Close", font="Arial 12")
+        close_button = tkinter.Button(self, text="Close", font="Arial 12")
         close_button.config(command=self.close_button_func)
         close_button.grid(column=6, row=4, padx=10, pady=10)
         self.switch_frame(IrregularVerbsPage)
@@ -63,18 +63,15 @@ class SampleApp(tkinter.Tk):
         entry_['fg'] = 'grey'
 
     @staticmethod
-    def focus_in(entry_, default_entry_color):
-        print(entry_['fg'])
-        print(entry_['fg'] == 'grey')
-        if entry_['fg'] == 'grey':
+    def focus_in(event=None, entry_=None, color=None):
+        if entry_ and entry_['fg'] == 'grey':
             entry_.delete('0', 'end')
-            entry_['fg'] = default_entry_color
-            print('default_entry_color -', default_entry_color)
+            entry_['fg'] = color
 
     @staticmethod
-    def focus_out(entry_, text_):
+    def focus_out(event=None, entry_=None, text=None):
         if not entry_.get():
-            SampleApp.put_placeholder(entry_, text_)
+            SampleApp.put_placeholder(entry_, text)
 
     def switch_frame(self, frame_class):
         """ Destroys current frame and replaces it with a new one. """
@@ -209,10 +206,6 @@ class MainPage(tkinter.Frame):
         self.entry = tkinter.Entry(self.frame_top, width=25, font="Arial 12", fg='black')
         # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
         self.entry.bind("<Return>", self.change)
-        # self.default_entry_color = 'black'
-        # master.put_placeholder(self.entry, 'ewrwerw')
-        # self.entry.bind("<FocusIn>", master.focus_in(self.entry, self.default_entry_color))
-        # self.entry.bind("<FocusOut>", master.focus_out(self.entry, 'ghjsdg'))
         self.entry.focus()
 
         self.check_button = tkinter.Button(self.frame_top, text="Проверить", font="Arial 12", width=15)
@@ -258,7 +251,7 @@ class MainPage(tkinter.Frame):
         """
 
         global MISTAKE
-        key = self.label['text']
+        key = self.word['text']
         key_result = self.master.words_dict.get(key, {})
         translate = key_result.get('translate', '').lower()
         answer = self.entry.get().lower()
@@ -365,11 +358,27 @@ class IrregularVerbsPage(tkinter.Frame):
         self.entry_form_2 = tkinter.Entry(frame_top, width=25, font="Arial 12")
         self.entry_form_3 = tkinter.Entry(frame_top, width=25, font="Arial 12")
 
-        # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
+        # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре)
+        # при нажатие кнопки "Enter" в любом поле ввода, будет запущена проверка введенных значений
         self.entry_form_1.bind("<Return>", self.change)
         self.entry_form_2.bind("<Return>", self.change)
         self.entry_form_3.bind("<Return>", self.change)
+
         self.entry_form_1.focus()
+
+        self.master.put_placeholder(self.entry_form_2, 'second form')
+        self.master.put_placeholder(self.entry_form_3, 'third form')
+
+        # если курсор не установлен в поле ввода (<FocusOut>), то появляется плейсхолдер
+        self.entry_form_1.bind("<FocusIn>", lambda event: self.master.focus_in(event=event, entry_=self.entry_form_1, color='black'))
+        self.entry_form_1.bind("<FocusOut>", lambda event: self.master.focus_out(event=event, entry_=self.entry_form_1, text='first form'))
+
+        self.entry_form_2.bind("<FocusIn>", lambda event: self.master.focus_in(event=event, entry_=self.entry_form_2, color='black'))
+        self.entry_form_2.bind("<FocusOut>", lambda event: self.master.focus_out(event=event, entry_=self.entry_form_2, text='second form'))
+
+        self.entry_form_3.bind("<FocusIn>", lambda event: self.master.focus_in(event=event, entry_=self.entry_form_3, color='black'))
+        self.entry_form_3.bind("<FocusOut>", lambda event: self.master.focus_out(event=event, entry_=self.entry_form_3, text='third form'))
+
         self.entry_form_1.grid(column=1, row=0, padx=10, pady=10)
         self.entry_form_2.grid(column=1, row=1, padx=10, pady=10)
         self.entry_form_3.grid(column=1, row=2, padx=10, pady=10)
