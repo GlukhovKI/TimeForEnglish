@@ -45,7 +45,7 @@ class SampleApp(tkinter.Tk):
         close_button = tkinter.Button(self, text="Close", font="Arial 12")
         close_button.config(command=self.close_button_func)
         close_button.grid(column=6, row=4, padx=10, pady=10)
-        self.switch_frame(IrregularVerbsPage)
+        self.switch_frame(MainPage)
 
     def new_word(self) -> str:
         """ Выбирает новое слово """
@@ -211,7 +211,7 @@ class MainPage(tkinter.Frame):
         self.check_button = tkinter.Button(self.frame_top, text="Проверить", font="Arial 12", width=15)
         self.check_button.config(command=self.change)
 
-        self.timer = tkinter.Label(self, text="%s:%s:%s" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white',
+        self.timer = tkinter.Label(self, text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white',
                                    background=master.background_color)
         self.timer.after_idle(self.tick)
 
@@ -243,7 +243,7 @@ class MainPage(tkinter.Frame):
         elif MINUTE == 59:
             HOUR += 1
             MINUTE = -1
-        self.timer['text'] = "%s:%s:%s" % (HOUR, MINUTE, SECOND)
+        self.timer['text'] = "%02i:%02i:%02i" % (HOUR, MINUTE, SECOND)
 
     def change(self, event=None):
         """
@@ -388,7 +388,7 @@ class IrregularVerbsPage(tkinter.Frame):
         self.check_button.grid(column=3, row=1, padx=10, pady=10)
 
         self.timer = tkinter.Label(self,
-                                   text="%s:%s:%s" % (HOUR, MINUTE, SECOND),
+                                   text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND),
                                    font=("Consolas", 14),
                                    fg='white',
                                    background=master.background_color)
@@ -466,11 +466,11 @@ class IrregularVerbsPage(tkinter.Frame):
         SECOND += 1
         if SECOND == 59:
             MINUTE += 1
-            SECOND = -1
+            SECOND = 1
         elif MINUTE == 59:
             HOUR += 1
-            MINUTE = -1
-        self.timer['text'] = "%s:%s:%s" % (HOUR, MINUTE, SECOND)
+            MINUTE = 1
+        self.timer['text'] = "%02i:%02i:%02i" % (HOUR, MINUTE, SECOND)
 
 
 if __name__ == '__main__':
