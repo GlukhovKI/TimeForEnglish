@@ -2,6 +2,8 @@ import csv
 import random
 import tkinter
 
+from PIL import ImageTk, Image
+
 SECOND = MINUTE = HOUR = 0
 MISTAKE = False
 
@@ -45,7 +47,8 @@ class SampleApp(tkinter.Tk):
         close_button = tkinter.Button(self, text="Close", font="Arial 12")
         close_button.config(command=self.close_button_func)
         close_button.grid(column=6, row=4, padx=10, pady=10)
-        self.switch_frame(MainPage)
+
+        self.switch_frame(PhotoImage)
 
     def new_word(self) -> str:
         """ Выбирает новое слово """
@@ -172,6 +175,32 @@ class SampleApp(tkinter.Tk):
             print(self.last_ten_words, '\n')
         else:
             raise Exception('Нет данных для изучения - файл English_dictionary.csv')
+
+
+class PhotoImage(tkinter.Frame):
+    """
+    Загрузка картинки
+    """
+    def __init__(self, master):
+        tkinter.Frame.__init__(self, master)
+
+        # открываем изображение
+        path = ".//PhotoImage//Picture_1.jpg"
+        image = Image.open(path)
+
+        # находим максимальную длину сторон
+        max_size = max(image.size)
+        # вычисляем пропорцию для уменьшения или увеличения изображения в окно
+        ratio = (550 / float(max_size))
+        width = int((float(image.size[0]) * float(ratio)))
+        height = int((float(image.size[1]) * float(ratio)))
+
+        # изменяем размер изображения
+        resized_img = image.resize((width, height), Image.ANTIALIAS)
+
+        self.img = ImageTk.PhotoImage(resized_img)
+        self.panel = tkinter.Label(self, image=self.img)
+        self.panel.grid(column=1, row=1, columnspan=6, rowspan=3, sticky=tkinter.N)
 
 
 class MainPage(tkinter.Frame):
