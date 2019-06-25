@@ -310,7 +310,7 @@ class MainPage(tkinter.Frame):
 
             # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
             if self.example_text['text']:
-                print('вывели пример текста')
+                print('Вывели пример текста')
                 self.check_button.after(3000, self.new_text_message)
             else:
                 self.new_text_message()
