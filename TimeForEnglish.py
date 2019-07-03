@@ -1,6 +1,7 @@
 import csv
 import random
 import tkinter
+import pyttsx3
 
 from PIL import ImageTk, Image
 
@@ -14,11 +15,15 @@ class SampleApp(tkinter.Tk):
         self._frame = None
         self.background_color = '#669999'
         self.default_entry_color = 'black'
+        self.last_ten_words = ''
 
         self.words_dict = {}
         self.irregular_verbs_dict = {}
 
         self.set_root_config()
+
+        self.engine = pyttsx3.init()
+        self.engine.setProperty("rate", 100)
 
         # TODO что то придумать с БД и заменить это говно (работа с файлом csv)
         # Подготавливаем массив слов для изучения из файла English_dictionary.csv
@@ -52,7 +57,7 @@ class SampleApp(tkinter.Tk):
 
     def new_word(self) -> str:
         """ Выбирает новое слово """
-        self.random_word = random.choice(list(self.irregular_verbs_dict.keys()))
+        self.random_word = random.choice(list(self.words_dict.keys()))
         return self.random_word
 
     def new_verb(self) -> str:
@@ -159,13 +164,10 @@ class SampleApp(tkinter.Tk):
             reader = csv.DictReader(csv_file, delimiter=';')
             for row in reader:
                 if row['irregular_verbs']:
-                    print(row)
                     self.irregular_verbs_dict[row['key']] = row
                 else:
-                    print(row)
                     self.words_dict[row['key']] = row
                     last_ten_words.append((row['key'], row['translate']))
-            print()
 
         if self.words_dict:
             self.last_ten_words = "\n".join(
@@ -220,27 +222,54 @@ class MainPage(tkinter.Frame):
 
         # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
         self.frame_top = tkinter.Frame(self)
+        self.example_frame = tkinter.Frame(self, background=master.background_color)
 
         self.word = tkinter.Label(self.frame_top)
         self.word.config(fg='black', font="Arial 14", width=30)
         self.word['text'] = master.random_word
 
-        self.example_text = tkinter.Label(self)
+        # Пример предложения с пройденным словом
+        self.example_text = tkinter.Label(self.example_frame)
         self.example_text.config(font="Purisa 18", background=master.background_color, fg='white')
 
-        self.example_question = tkinter.Label(self)
+        # Аудио предложения с пройденным словом
+        self.example_text_button = tkinter.Button(self.example_frame, text="Audio", font="Arial 12")
+        self.example_text_button.config(command=self.example_text_audio)
+
+        # Пример вопросительного предложения с пройденным словом
+        self.example_question = tkinter.Label(self.example_frame)
         self.example_question.config(font="Purisa 18", background=master.background_color, fg='white')
+
+        # Аудио вопросительного предложения с пройденным словом
+        self.example_question_button = tkinter.Button(self.example_frame, text="Audio", font="Arial 12")
+        self.example_question_button.config(command=self.example_question_audio)
+
+        # шкала скорости воспроизведения audio
+        self.scale_rate = tkinter.Scale(self.example_frame,
+                                        background=master.background_color,
+                                        highlightbackground=master.background_color,
+                                        troughcolor='white',
+                                        borderwidth=0,
+                                        orient=tkinter.HORIZONTAL,
+                                        length=200,
+                                        from_=100,
+                                        to=200,
+                                        resolution=10)
 
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
         self.entry = tkinter.Entry(self.frame_top, width=25, font="Arial 12", fg='black')
-        # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре).
+        # Метод bind привязывает событие к какому-либо действию
+        # (нажатие кнопки мыши, нажатие клавиши на клавиатуре)
         self.entry.bind("<Return>", self.change)
         self.entry.focus()
 
         self.check_button = tkinter.Button(self.frame_top, text="Проверить", font="Arial 12", width=15)
         self.check_button.config(command=self.change)
 
-        self.timer = tkinter.Label(self, text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND), font=("Consolas", 14), fg='white',
+        self.timer = tkinter.Label(self,
+                                   text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND),
+                                   font=("Consolas", 14),
+                                   fg='white',
                                    background=master.background_color)
         self.timer.after_idle(self.tick)
 
@@ -258,8 +287,9 @@ class MainPage(tkinter.Frame):
         self.timer.grid(column=0, row=3, padx=10, pady=10)
         tkinter.Label(self, background=master.background_color).grid(column=0, row=4, padx=10, pady=10)
         self.frame_top.grid(column=0, row=5, padx=10, pady=10)
-        self.example_text.grid(column=0, row=6, padx=10, pady=10)
-        self.example_question.grid(column=0, row=7, padx=10, pady=10)
+        self.example_frame.grid(column=0, row=6, columnspan=2, padx=10, pady=10)
+
+        # Блок примеров пройденного слова формируется только после правильно введенного значения
 
     def tick(self):
         global SECOND, MINUTE, HOUR
@@ -274,27 +304,73 @@ class MainPage(tkinter.Frame):
             MINUTE = -1
         self.timer['text'] = "%02i:%02i:%02i" % (HOUR, MINUTE, SECOND)
 
+    def example_text_audio(self):
+        """
+        Аудио предложения с пройденным словом
+        """
+        self.master.engine.setProperty('rate', self.scale_rate.get())
+        self.master.engine.say(self.example_text['text'])
+        self.master.engine.runAndWait()
+
+    def example_question_audio(self):
+        """
+        Аудио вопросительного предложения с пройденным словом
+        """
+        self.master.engine.setProperty('rate', self.scale_rate.get())
+        self.master.engine.say(self.example_question['text'])
+        self.master.engine.runAndWait()
+
+    def remove_example_frame(self):
+        """
+        Скрываем блок примеров пройденного слова
+        """
+        self.example_text.grid_remove()
+        self.example_text_button.grid_remove()
+        self.example_question.grid_remove()
+        self.example_question_button.grid_remove()
+        self.scale_rate.grid_remove()
+
+    def add_example_frame(self, key_result: dict):
+        """
+        Показываем блок примеров пройденного слова (при наличие примеров)
+        """
+        self.example_text['text'] = key_result.get('example_text')
+        self.example_question['text'] = key_result.get('example_question')
+
+        if self.example_text['text'] and self.example_question['text']:
+            self.example_text.grid(column=1, row=0, padx=10, pady=10)
+            self.example_text_button.grid(column=0, row=0, padx=10, pady=10)
+            self.example_question.grid(column=1, row=1, padx=10, pady=10)
+            self.example_question_button.grid(column=0, row=1, padx=10, pady=10)
+            self.scale_rate.grid(column=0, row=2, columnspan=2)
+
+        elif not self.example_text['text'] and self.example_question['text']:
+            self.example_question.grid(column=1, row=0, padx=10, pady=10)
+            self.example_question_button.grid(column=0, row=0, padx=10, pady=10)
+            self.scale_rate.grid(column=0, row=1, columnspan=2)
+
+        elif self.example_text['text'] and not self.example_question['text']:
+            self.example_text.grid(column=1, row=0, padx=10, pady=10)
+            self.example_text_button.grid(column=0, row=0, padx=10, pady=10)
+            self.scale_rate.grid(column=0, row=1, columnspan=2)
+
     def change(self, event=None):
         """
         Проверка введенного пользователем значения перевода
         """
 
         global MISTAKE
+
+        self.remove_example_frame()
+
         key = self.word['text']
         key_result = self.master.words_dict.get(key, {})
         translate = key_result.get('translate', '').lower()
         answer = self.entry.get().lower()
-        print(answer, ' -> ', translate)
+        print('\n"{}" answer -> "{}" (translate)'.format(answer, translate))
 
         if answer == translate:
-            self.example_text['text'] = key_result.get('example_text')
-
-            # если примера текста нет, то в верхний блок примеров встанет вопрос
-            if not self.example_text['text']:
-                self.example_text['text'] = key_result.get('example_question')
-                self.example_question['text'] = ''
-            else:
-                self.example_question['text'] = key_result.get('example_question')
+            self.add_example_frame(key_result)
 
             self.info_label['text'] = 'I knew you could do it!'
             self.info_label.config(fg='white')
@@ -310,7 +386,6 @@ class MainPage(tkinter.Frame):
 
             # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
             if self.example_text['text']:
-                print('Вывели пример текста')
                 self.check_button.after(3000, self.new_text_message)
             else:
                 self.new_text_message()
@@ -387,7 +462,8 @@ class IrregularVerbsPage(tkinter.Frame):
         self.entry_form_2 = tkinter.Entry(frame_top, width=25, font="Arial 12")
         self.entry_form_3 = tkinter.Entry(frame_top, width=25, font="Arial 12")
 
-        # Метод bind привязывает событие к какому-либо действию (нажатие кнопки мыши, нажатие клавиши на клавиатуре)
+        # Метод bind привязывает событие к какому-либо действию
+        # (нажатие кнопки мыши, нажатие клавиши на клавиатуре)
         # при нажатие кнопки "Enter" в любом поле ввода, будет запущена проверка введенных значений
         self.entry_form_1.bind("<Return>", self.change)
         self.entry_form_2.bind("<Return>", self.change)
@@ -399,14 +475,32 @@ class IrregularVerbsPage(tkinter.Frame):
         self.master.put_placeholder(self.entry_form_3, 'third form')
 
         # если курсор не установлен в поле ввода (<FocusOut>), то появляется плейсхолдер
-        self.entry_form_1.bind("<FocusIn>", lambda event: self.master.focus_in(event=event, entry_=self.entry_form_1, color='black'))
-        self.entry_form_1.bind("<FocusOut>", lambda event: self.master.focus_out(event=event, entry_=self.entry_form_1, text='first form'))
+        self.entry_form_1.bind("<FocusIn>",
+                               lambda event: self.master.focus_in(event=event,
+                                                                  entry_=self.entry_form_1,
+                                                                  color='black'))
+        self.entry_form_1.bind("<FocusOut>",
+                               lambda event: self.master.focus_out(event=event,
+                                                                   entry_=self.entry_form_1,
+                                                                   text='first form'))
 
-        self.entry_form_2.bind("<FocusIn>", lambda event: self.master.focus_in(event=event, entry_=self.entry_form_2, color='black'))
-        self.entry_form_2.bind("<FocusOut>", lambda event: self.master.focus_out(event=event, entry_=self.entry_form_2, text='second form'))
+        self.entry_form_2.bind("<FocusIn>",
+                               lambda event: self.master.focus_in(event=event,
+                                                                  entry_=self.entry_form_2,
+                                                                  color='black'))
+        self.entry_form_2.bind("<FocusOut>",
+                               lambda event: self.master.focus_out(event=event,
+                                                                   entry_=self.entry_form_2,
+                                                                   text='second form'))
 
-        self.entry_form_3.bind("<FocusIn>", lambda event: self.master.focus_in(event=event, entry_=self.entry_form_3, color='black'))
-        self.entry_form_3.bind("<FocusOut>", lambda event: self.master.focus_out(event=event, entry_=self.entry_form_3, text='third form'))
+        self.entry_form_3.bind("<FocusIn>",
+                               lambda event: self.master.focus_in(event=event,
+                                                                  entry_=self.entry_form_3,
+                                                                  color='black'))
+        self.entry_form_3.bind("<FocusOut>",
+                               lambda event: self.master.focus_out(event=event,
+                                                                   entry_=self.entry_form_3,
+                                                                   text='third form'))
 
         self.entry_form_1.grid(column=1, row=0, padx=10, pady=10)
         self.entry_form_2.grid(column=1, row=1, padx=10, pady=10)
