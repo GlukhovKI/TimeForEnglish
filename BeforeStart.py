@@ -3,4 +3,5 @@ try:
 except:
     from pip._internal import main as pipmain
 
-pipmain(['install', "pillow"])
+pipmain(['install', "-r", "Modules.txt"])
+print('Done')
