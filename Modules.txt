@@ -1,3 +1,2 @@
-google_speech
 pillow
 pyttsx3
