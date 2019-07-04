@@ -7,7 +7,7 @@ from PIL import ImageTk, Image
 
 SECOND = MINUTE = HOUR = 0
 MISTAKE = False
-
+ншапнанеаноаннлгалнанл
 
 class SampleApp(tkinter.Tk):
     def __init__(self):
