@@ -5,9 +5,9 @@ import pyttsx3
 
 from PIL import ImageTk, Image
 
-SECOND = minute = HOUR = 0
+SECOND = MINUTEs = HOUR = 0
 MISTAKE = False
-
+ншапнанеаноаннлгалнанл
 
 class SampleApp(tkinter.Tk):
     def __init__(self):
