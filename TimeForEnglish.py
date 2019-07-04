@@ -5,7 +5,7 @@ import pyttsx3
 
 from PIL import ImageTk, Image
 
-SECOND = MINUTE = HOUR = 0
+SECOND = MINUTEs = HOUR = 0
 MISTAKE = False
 ншапнанеаноаннлгалнанл
 
