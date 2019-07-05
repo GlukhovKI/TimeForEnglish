@@ -2,12 +2,13 @@ import csv
 import random
 import tkinter
 import pyttsx3
+import os
 
 from PIL import ImageTk, Image
 
-SECOND = MINUTEs = HOUR = 0
+SECOND = MINUTE = HOUR = 0
 MISTAKE = False
-ншапнанеаноаннлгалнанл
+
 
 class SampleApp(tkinter.Tk):
     def __init__(self):
@@ -187,6 +188,7 @@ class PhotoImage(tkinter.Frame):
         tkinter.Frame.__init__(self, master)
 
         # открываем изображение
+        path1 = self.get_path_to_image()  #".//PhotoImage//Picture_1.jpg"
         path = ".//PhotoImage//Picture_1.jpg"
         image = Image.open(path)
 
@@ -203,6 +205,18 @@ class PhotoImage(tkinter.Frame):
         self.img = ImageTk.PhotoImage(resized_img)
         self.panel = tkinter.Label(self, image=self.img)
         self.panel.grid(column=1, row=1, columnspan=6, rowspan=3, sticky=tkinter.N)
+
+    def get_path_to_image(self):
+        # Открываем файл со списком картинок
+        picture_list = open("./PhotoImage/test.txt", "w")
+        # Получаем список файлов из папки
+        files = os.listdir("./PhotoImage")
+
+        # Исключаем файл из списка файлов, полученных в предыдущем шаге
+        files.remove("test.txt")
+        # Названия, которые остались из списка - записываем в файл
+        for name in files:
+            picture_list.write(name)
 
 
 class MainPage(tkinter.Frame):
@@ -296,12 +310,12 @@ class MainPage(tkinter.Frame):
         # Через каждую секунду происходит рекурсивый вызов функции
         self.timer.after(1000, self.tick)
         SECOND += 1
-        if SECOND == 59:
+        if SECOND == 60:
             MINUTE += 1
-            SECOND = -1
-        elif MINUTE == 59:
+            SECOND = 0
+        elif MINUTE == 60:
             HOUR += 1
-            MINUTE = -1
+            MINUTE = 0
         self.timer['text'] = "%02i:%02i:%02i" % (HOUR, MINUTE, SECOND)
 
     def example_text_audio(self):
@@ -587,12 +601,12 @@ class IrregularVerbsPage(tkinter.Frame):
         # Через каждую секунду происходит рекурсивый вызов функции
         self.timer.after(1000, self.tick)
         SECOND += 1
-        if SECOND == 59:
+        if SECOND == 60:
             MINUTE += 1
-            SECOND = 1
-        elif MINUTE == 59:
+            SECOND = 0
+        elif MINUTE == 60:
             HOUR += 1
-            MINUTE = 1
+            MINUTE = 0
         self.timer['text'] = "%02i:%02i:%02i" % (HOUR, MINUTE, SECOND)
 
 
