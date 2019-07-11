@@ -17,7 +17,14 @@ class RowDb:
     """
     __slots__ = ['id_', 'key', 'translate', 'form_2', 'form_3', 'example_text', 'example_question', 'description']
 
-    def __init__(self, id_: int, key: str, translate: str = '', example_text: str = '', example_question: str = '', description: str = '', form_2: str = '', form_3: str = ''):
+    def __init__(self, id_: int,
+                 key: str,
+                 translate: str,
+                 example_text: str = '',
+                 example_question: str = '',
+                 description: str = '',
+                 form_2: str = '',
+                 form_3: str = ''):
         self.id_ = id_
         self.key = key
         self.translate = translate
@@ -43,11 +50,11 @@ class SampleApp(tkinter.Tk):
         self.engine = pyttsx3.init()
         self.engine.setProperty("rate", 100)
 
-        # TODO что то придумать с БД и заменить это говно (работа с файлом csv)
+        # TODO после реализации добавления/редактирования/удаления слов с помощью интерфейса,
+        # TODO удалить метод convert_csv_to_sqlite
         # Подготавливаем массив слов для изучения из файла English_dictionary.csv
         self.convert_csv_to_sqlite()
         self.create_or_read_db()
-        # self.csv_reader()
 
         menu_frame = tkinter.Frame(self, background=self.background_color)
         menu_frame.grid(column=0, row=0, columnspan=7)
@@ -81,7 +88,7 @@ class SampleApp(tkinter.Tk):
 
         db_cur = db_con.cursor()
         # создаем таблицу, если ее не существует
-        db_cur.execute("""
+        db_cur.executescript("""
             CREATE TABLE IF NOT EXISTS Words(
                 id_ INTEGER PRIMARY KEY ASC,
                 key TEXT,
@@ -90,9 +97,7 @@ class SampleApp(tkinter.Tk):
                 example_question TEXT,
                 description TEXT
                 );
-        """)
-
-        db_cur.execute("""
+                
             CREATE TABLE IF NOT EXISTS IrregularVerbs(
                 id_ INTEGER PRIMARY KEY ASC,
                 key TEXT,
@@ -140,10 +145,9 @@ class SampleApp(tkinter.Tk):
         db_con.close()
 
         if self.words_dict:
-
-            print('Общее количество записей в файле -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
+            print('Общее количество записей в базе -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
         else:
-            raise Exception('Нет данных для изучения - файл English_dictionary.csv')
+            raise Exception('Нет данных для изучения')
 
     def new_word(self) -> str:
         """ Выбирает новое слово """
@@ -242,7 +246,8 @@ class SampleApp(tkinter.Tk):
         """
         self.quit()
 
-    def convert_csv_to_sqlite(self):
+    @staticmethod
+    def convert_csv_to_sqlite():
         """
         Получения списка всех слов и последних 10ти добавленных
         """
@@ -261,7 +266,7 @@ class SampleApp(tkinter.Tk):
         db_con.commit()
 
         # создаем таблицу, если ее не существует
-        db_cur.execute("""
+        db_cur.executescript("""
             CREATE TABLE IF NOT EXISTS Words(
                 id_ INTEGER PRIMARY KEY ASC,
                 key TEXT,
@@ -270,8 +275,7 @@ class SampleApp(tkinter.Tk):
                 example_question TEXT,
                 description TEXT
                 );
-        """)
-        db_cur.execute("""
+                
             CREATE TABLE IF NOT EXISTS IrregularVerbs(
                 id_ INTEGER PRIMARY KEY ASC,
                 key TEXT,
@@ -288,7 +292,6 @@ class SampleApp(tkinter.Tk):
             reader = csv.DictReader(csv_file, delimiter=';')
             for row in reader:
                 if row['irregular_verbs']:
-                    print(row)
                     db_cur.execute("""
                         INSERT INTO IrregularVerbs(
                             key,
@@ -300,7 +303,6 @@ class SampleApp(tkinter.Tk):
                             description) VALUES (?,?,?,?,?,?,?)
                            """, (row['key'], row['translate'], row['form_2'], row['form_3'], row['example_text'], row['example_question'], row['description']))
                 else:
-                    print(row)
                     db_cur.execute("""
                         INSERT INTO Words(
                             key,
@@ -391,18 +393,6 @@ class MainPage(tkinter.Frame):
         self.example_question_button = tkinter.Button(self.example_frame, text="Audio", font="Arial 12")
         self.example_question_button.config(command=self.example_question_audio)
 
-        # шкала скорости воспроизведения audio
-        self.scale_rate = tkinter.Scale(self.example_frame,
-                                        background=master.background_color,
-                                        highlightbackground=master.background_color,
-                                        troughcolor='white',
-                                        borderwidth=0,
-                                        orient=tkinter.HORIZONTAL,
-                                        length=200,
-                                        from_=100,
-                                        to=200,
-                                        resolution=10)
-
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
         self.entry = tkinter.Entry(self.frame_top, width=25, font="Arial 12", fg='black')
         # Метод bind привязывает событие к какому-либо действию
@@ -455,7 +445,6 @@ class MainPage(tkinter.Frame):
         """
         Аудио предложения с пройденным словом
         """
-        self.master.engine.setProperty('rate', self.scale_rate.get())
         self.master.engine.say(self.example_text['text'])
         self.master.engine.runAndWait()
 
@@ -463,7 +452,6 @@ class MainPage(tkinter.Frame):
         """
         Аудио вопросительного предложения с пройденным словом
         """
-        self.master.engine.setProperty('rate', self.scale_rate.get())
         self.master.engine.say(self.example_question['text'])
         self.master.engine.runAndWait()
 
@@ -475,7 +463,6 @@ class MainPage(tkinter.Frame):
         self.example_text_button.grid_remove()
         self.example_question.grid_remove()
         self.example_question_button.grid_remove()
-        self.scale_rate.grid_remove()
 
     def add_example_frame(self, key_result: RowDb):
         """
@@ -489,17 +476,14 @@ class MainPage(tkinter.Frame):
             self.example_text_button.grid(column=0, row=0, padx=10, pady=10)
             self.example_question.grid(column=1, row=1, padx=10, pady=10)
             self.example_question_button.grid(column=0, row=1, padx=10, pady=10)
-            self.scale_rate.grid(column=0, row=2, columnspan=2)
 
         elif not key_result.example_text and key_result.example_question:
             self.example_question.grid(column=1, row=0, padx=10, pady=10)
             self.example_question_button.grid(column=0, row=0, padx=10, pady=10)
-            self.scale_rate.grid(column=0, row=1, columnspan=2)
 
         elif key_result.example_text and not key_result.example_question:
             self.example_text.grid(column=1, row=0, padx=10, pady=10)
             self.example_text_button.grid(column=0, row=0, padx=10, pady=10)
-            self.scale_rate.grid(column=0, row=1, columnspan=2)
 
     def change(self, event=None):
         """
@@ -562,8 +546,10 @@ class TenWordsPage(tkinter.Frame):
 
         last_ten_words = self.get_last_ten_words()
         self.ten_words = tkinter.Label(self.last_ten_words_frame)
-        self.ten_words.config(fg='white', font="Arial 21",
-                              background=master.background_color, text=last_ten_words)
+        self.ten_words.config(fg='white',
+                              font="Arial 21",
+                              background=master.background_color,
+                              text=last_ten_words)
 
         tkinter.Label(self, background=master.background_color).grid(column=0, row=0, padx=10, pady=10)
         self.last_ten_words_frame.grid(column=0, row=1, padx=10, pady=10, ipadx=40, ipady=10)
@@ -580,7 +566,8 @@ class TenWordsPage(tkinter.Frame):
                 key,
                 translate
             FROM Words
-            ORDER BY id_ DESC LIMIT 10
+            ORDER BY id_ DESC 
+            LIMIT 10
         """)
         for row in rows_words:
             last_ten_words += '{} -> {}\n'.format(row[0], row[1])
