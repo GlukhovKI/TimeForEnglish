@@ -1,13 +1,31 @@
 import csv
+import os
 import random
 import tkinter
-import pyttsx3
-import os
 
+import pyttsx3
+import sqlite3
 from PIL import ImageTk, Image
 
 SECOND = MINUTE = HOUR = 0
 MISTAKE = False
+
+
+class RowDb:
+    """
+    класс-упаковщик для строк из таблицы "Words" (TimeForEnglish.db)
+    """
+    __slots__ = ['id_', 'key', 'translate', 'form_2', 'form_3', 'example_text', 'example_question', 'description']
+
+    def __init__(self, id_: int, key: str, translate: str = '', example_text: str = '', example_question: str = '', description: str = '', form_2: str = '', form_3: str = ''):
+        self.id_ = id_
+        self.key = key
+        self.translate = translate
+        self.form_2 = form_2
+        self.form_3 = form_3
+        self.example_text = example_text
+        self.example_question = example_question
+        self.description = description
 
 
 class SampleApp(tkinter.Tk):
@@ -16,7 +34,6 @@ class SampleApp(tkinter.Tk):
         self._frame = None
         self.background_color = '#669999'
         self.default_entry_color = 'black'
-        self.last_ten_words = ''
 
         self.words_dict = {}
         self.irregular_verbs_dict = {}
@@ -28,7 +45,9 @@ class SampleApp(tkinter.Tk):
 
         # TODO что то придумать с БД и заменить это говно (работа с файлом csv)
         # Подготавливаем массив слов для изучения из файла English_dictionary.csv
-        self.csv_reader()
+        self.convert_csv_to_sqlite()
+        self.create_or_read_db()
+        # self.csv_reader()
 
         menu_frame = tkinter.Frame(self, background=self.background_color)
         menu_frame.grid(column=0, row=0, columnspan=7)
@@ -55,6 +74,76 @@ class SampleApp(tkinter.Tk):
         close_button.grid(column=6, row=4, padx=10, pady=10)
 
         self.switch_frame(PhotoImage)
+
+    def create_or_read_db(self):
+        # соединяемся с базой данных, если базы данных нет, то создается новая
+        db_con = sqlite3.connect('TimeForEnglish.db')
+
+        db_cur = db_con.cursor()
+        # создаем таблицу, если ее не существует
+        db_cur.execute("""
+            CREATE TABLE IF NOT EXISTS Words(
+                id_ INTEGER PRIMARY KEY ASC,
+                key TEXT,
+                translate TEXT,
+                example_text TEXT,
+                example_question TEXT,
+                description TEXT
+                );
+        """)
+
+        db_cur.execute("""
+            CREATE TABLE IF NOT EXISTS IrregularVerbs(
+                id_ INTEGER PRIMARY KEY ASC,
+                key TEXT,
+                translate TEXT,
+                form_2 TEXT,
+                form_3 TEXT,
+                example_text TEXT,
+                example_question TEXT,
+                description TEXT
+                );
+        """)
+
+        rows_words = db_cur.execute("""
+            SELECT 
+                id_,
+                key,
+                translate,
+                example_text,
+                example_question,
+                description
+            FROM Words
+        """)
+        for row in rows_words:
+            word = RowDb(*row)
+            self.words_dict[word.key] = word
+
+        rows_irregular_verbs = db_cur.execute("""
+            SELECT 
+                id_,
+                key,
+                translate,
+                example_text,
+                example_question,
+                description,
+                form_2,
+                form_3
+            FROM IrregularVerbs
+        """)
+        for row in rows_irregular_verbs:
+            word = RowDb(*row)
+            self.irregular_verbs_dict[word.key] = word
+        db_con.commit()
+
+        db_cur.close()
+        db_con.close()
+
+        if self.words_dict:
+
+            print('Общее количество записей в файле -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
+        else:
+            raise Exception('Нет данных для изучения - файл English_dictionary.csv')
 
     def new_word(self) -> str:
         """ Выбирает новое слово """
@@ -153,31 +242,76 @@ class SampleApp(tkinter.Tk):
         """
         self.quit()
 
-    def csv_reader(self):
+    def convert_csv_to_sqlite(self):
         """
         Получения списка всех слов и последних 10ти добавленных
         """
+        db_con = sqlite3.connect('TimeForEnglish.db')
+        db_cur = db_con.cursor()
 
         csv_path = "English_dictionary.csv"
 
-        last_ten_words = []
+        # отчищаем базу
+        db_cur.execute("""
+            DROP TABLE IF EXISTS Words; 
+        """)
+        db_cur.execute("""
+            DROP TABLE IF EXISTS IrregularVerbs;
+        """)
+        db_con.commit()
+
+        # создаем таблицу, если ее не существует
+        db_cur.execute("""
+            CREATE TABLE IF NOT EXISTS Words(
+                id_ INTEGER PRIMARY KEY ASC,
+                key TEXT,
+                translate TEXT,
+                example_text TEXT,
+                example_question TEXT,
+                description TEXT
+                );
+        """)
+        db_cur.execute("""
+            CREATE TABLE IF NOT EXISTS IrregularVerbs(
+                id_ INTEGER PRIMARY KEY ASC,
+                key TEXT,
+                translate TEXT,
+                form_2 TEXT,
+                form_3 TEXT,
+                example_text TEXT,
+                example_question TEXT,
+                description TEXT
+                );
+        """)
+
         with open(csv_path, "r") as csv_file:
             reader = csv.DictReader(csv_file, delimiter=';')
             for row in reader:
                 if row['irregular_verbs']:
-                    self.irregular_verbs_dict[row['key']] = row
+                    print(row)
+                    db_cur.execute("""
+                        INSERT INTO IrregularVerbs(
+                            key,
+                            translate,
+                            form_2,
+                            form_3,
+                            example_text,
+                            example_question,
+                            description) VALUES (?,?,?,?,?,?,?)
+                           """, (row['key'], row['translate'], row['form_2'], row['form_3'], row['example_text'], row['example_question'], row['description']))
                 else:
-                    self.words_dict[row['key']] = row
-                    last_ten_words.append((row['key'], row['translate']))
-
-        if self.words_dict:
-            self.last_ten_words = "\n".join(
-                [key + ' -> ' + translate for key, translate in last_ten_words[-10:]])
-
-            print('Общее количество записей в файле -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
-            print(self.last_ten_words, '\n')
-        else:
-            raise Exception('Нет данных для изучения - файл English_dictionary.csv')
+                    print(row)
+                    db_cur.execute("""
+                        INSERT INTO Words(
+                            key,
+                            translate,
+                            example_text,
+                            example_question,
+                            description) VALUES (?, ?, ?, ?, ?)
+                           """, (row['key'], row['translate'], row['example_text'], row['example_question'], row['description']))
+        db_con.commit()
+        db_cur.close()
+        db_con.close()
 
 
 class PhotoImage(tkinter.Frame):
@@ -188,7 +322,6 @@ class PhotoImage(tkinter.Frame):
         tkinter.Frame.__init__(self, master)
 
         # открываем изображение
-        path1 = self.get_path_to_image()  #".//PhotoImage//Picture_1.jpg"
         path = ".//PhotoImage//Picture_1.jpg"
         image = Image.open(path)
 
@@ -344,26 +477,26 @@ class MainPage(tkinter.Frame):
         self.example_question_button.grid_remove()
         self.scale_rate.grid_remove()
 
-    def add_example_frame(self, key_result: dict):
+    def add_example_frame(self, key_result: RowDb):
         """
         Показываем блок примеров пройденного слова (при наличие примеров)
         """
-        self.example_text['text'] = key_result.get('example_text')
-        self.example_question['text'] = key_result.get('example_question')
+        self.example_text['text'] = key_result.example_text
+        self.example_question['text'] = key_result.example_question
 
-        if self.example_text['text'] and self.example_question['text']:
+        if key_result.example_text and key_result.example_question:
             self.example_text.grid(column=1, row=0, padx=10, pady=10)
             self.example_text_button.grid(column=0, row=0, padx=10, pady=10)
             self.example_question.grid(column=1, row=1, padx=10, pady=10)
             self.example_question_button.grid(column=0, row=1, padx=10, pady=10)
             self.scale_rate.grid(column=0, row=2, columnspan=2)
 
-        elif not self.example_text['text'] and self.example_question['text']:
+        elif not key_result.example_text and key_result.example_question:
             self.example_question.grid(column=1, row=0, padx=10, pady=10)
             self.example_question_button.grid(column=0, row=0, padx=10, pady=10)
             self.scale_rate.grid(column=0, row=1, columnspan=2)
 
-        elif self.example_text['text'] and not self.example_question['text']:
+        elif key_result.example_text and not key_result.example_question:
             self.example_text.grid(column=1, row=0, padx=10, pady=10)
             self.example_text_button.grid(column=0, row=0, padx=10, pady=10)
             self.scale_rate.grid(column=0, row=1, columnspan=2)
@@ -378,10 +511,9 @@ class MainPage(tkinter.Frame):
         self.remove_example_frame()
 
         key = self.word['text']
-        key_result = self.master.words_dict.get(key, {})
-        translate = key_result.get('translate', '').lower()
+        key_result = self.master.words_dict.get(key)
+        translate = key_result.translate.lower()
         answer = self.entry.get().lower()
-        print('\n"{}" answer -> "{}" (translate)'.format(answer, translate))
 
         if answer == translate:
             self.add_example_frame(key_result)
@@ -396,15 +528,18 @@ class MainPage(tkinter.Frame):
             MISTAKE = False
 
             if not self.master.words_dict:
+                self.word['text'] = ''
                 root.after(5000, root.quit())
-
-            # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
-            if self.example_text['text']:
-                self.check_button.after(3000, self.new_text_message)
             else:
-                self.new_text_message()
-            self.entry.delete(0, tkinter.END)
+                # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
+                if key_result.example_text or key_result.example_question:
+                    self.word['text'] = ''
+                    self.check_button.after(3000, self.new_text_message)
+                else:
+                    self.new_text_message()
+                self.entry.delete(0, tkinter.END)
         else:
+            print('\n"{}" answer -> "{}" (translate)'.format(answer, translate))
             MISTAKE = True
             self.entry.config(fg='#CC3366')
             self.info_label['text'] = 'Turn on your brain!'
@@ -425,13 +560,31 @@ class TenWordsPage(tkinter.Frame):
 
         self.last_ten_words_frame = tkinter.LabelFrame(self, background=master.background_color)
 
+        last_ten_words = self.get_last_ten_words()
         self.ten_words = tkinter.Label(self.last_ten_words_frame)
         self.ten_words.config(fg='white', font="Arial 21",
-                              background=master.background_color, text=master.last_ten_words)
+                              background=master.background_color, text=last_ten_words)
 
         tkinter.Label(self, background=master.background_color).grid(column=0, row=0, padx=10, pady=10)
         self.last_ten_words_frame.grid(column=0, row=1, padx=10, pady=10, ipadx=40, ipady=10)
         self.ten_words.pack()
+
+    @staticmethod
+    def get_last_ten_words():
+        last_ten_words = ''
+        db_con = sqlite3.connect('TimeForEnglish.db')
+        db_cur = db_con.cursor()
+
+        rows_words = db_cur.execute("""
+            SELECT 
+                key,
+                translate
+            FROM Words
+            ORDER BY id_ DESC LIMIT 10
+        """)
+        for row in rows_words:
+            last_ten_words += '{} -> {}\n'.format(row[0], row[1])
+        return last_ten_words[:-1]
 
 
 class IrregularVerbsPage(tkinter.Frame):
@@ -539,28 +692,25 @@ class IrregularVerbsPage(tkinter.Frame):
 
         global MISTAKE
         key = self.irregular_verb['text']
-        key_result = self.master.irregular_verbs_dict.get(key, {})
+        key_result = self.master.irregular_verbs_dict.get(key)
 
-        translate_form_1 = key_result.get('translate', '').lower()
-        translate_form_2 = key_result.get('form_2', '').lower()
-        translate_form_3 = key_result.get('form_3', '').lower()
+        translate_form_1 = key_result.translate.lower()
+        translate_form_2 = key_result.form_2.lower()
+        translate_form_3 = key_result.form_3.lower()
         answer_form_1 = self.entry_form_1.get().lower()
         answer_form_2 = self.entry_form_2.get().lower()
         answer_form_3 = self.entry_form_3.get().lower()
-        print(answer_form_1, ' -> ', translate_form_1)
-        print(answer_form_2, ' -> ', translate_form_2)
-        print(answer_form_3, ' -> ', translate_form_3)
-        print()
+
         if answer_form_1 == translate_form_1 \
                 and answer_form_2 == translate_form_2 \
                 and answer_form_3 == translate_form_3:
-            self.example_text['text'] = key_result.get('example_text')
+            self.example_text['text'] = key_result.example_text
 
             # если примера текста нет, то в верхний блок примеров встанет вопрос
             if not self.example_text['text']:
-                self.example_text['text'] = key_result.get('example_question')
+                self.example_text['text'] = key_result.example_question
             else:
-                self.example_question['text'] = key_result.get('example_question')
+                self.example_question['text'] = key_result.example_question
 
             self.info_label['text'] = 'I knew you could do it!'
             self.info_label.config(fg='white')
@@ -574,10 +724,12 @@ class IrregularVerbsPage(tkinter.Frame):
             MISTAKE = False
 
             if not self.master.irregular_verbs_dict:
+                self.irregular_verb['text'] = ''
                 root.after(5000, root.quit())
 
             # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
-            if self.example_text['text']:
+            if key_result.example_text or key_result.example_question:
+                self.irregular_verb['text'] = ''
                 self.check_button.after(3000, self.new_text_message)
             else:
                 self.new_text_message()
@@ -586,6 +738,10 @@ class IrregularVerbsPage(tkinter.Frame):
             self.entry_form_3.delete(0, tkinter.END)
             self.entry_form_1.focus()
         else:
+            print(answer_form_1, ' -> ', translate_form_1)
+            print(answer_form_2, ' -> ', translate_form_2)
+            print(answer_form_3, ' -> ', translate_form_3)
+            print()
             MISTAKE = True
             self.entry_form_1.config(fg='#CC3366')
             self.entry_form_2.config(fg='#CC3366')
