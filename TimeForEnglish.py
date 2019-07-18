@@ -53,6 +53,11 @@ class SampleApp(tkinter.Tk):
         # TODO после реализации добавления/редактирования/удаления слов с помощью интерфейса,
         # TODO удалить метод convert_csv_to_sqlite
         # Подготавливаем массив слов для изучения из файла English_dictionary.csv
+
+        # соединяемся с базой данных, если базы данных нет, то создается новая
+        self.db_con = sqlite3.connect('TimeForEnglish.db')
+        self.db_cur = self.db_con.cursor()
+
         self.convert_csv_to_sqlite()
         self.create_or_read_db()
 
@@ -83,12 +88,8 @@ class SampleApp(tkinter.Tk):
         self.switch_frame(PhotoImage)
 
     def create_or_read_db(self):
-        # соединяемся с базой данных, если базы данных нет, то создается новая
-        db_con = sqlite3.connect('TimeForEnglish.db')
-
-        db_cur = db_con.cursor()
         # создаем таблицу, если ее не существует
-        db_cur.executescript("""
+        self.db_cur.executescript("""
             CREATE TABLE IF NOT EXISTS Words(
                 id_ INTEGER PRIMARY KEY ASC,
                 key TEXT,
@@ -110,7 +111,7 @@ class SampleApp(tkinter.Tk):
                 );
         """)
 
-        rows_words = db_cur.execute("""
+        rows_words = self.db_cur.execute("""
             SELECT 
                 id_,
                 key,
@@ -124,7 +125,7 @@ class SampleApp(tkinter.Tk):
             word = RowDb(*row)
             self.words_dict[word.key] = word
 
-        rows_irregular_verbs = db_cur.execute("""
+        rows_irregular_verbs = self.db_cur.execute("""
             SELECT 
                 id_,
                 key,
@@ -139,10 +140,7 @@ class SampleApp(tkinter.Tk):
         for row in rows_irregular_verbs:
             word = RowDb(*row)
             self.irregular_verbs_dict[word.key] = word
-        db_con.commit()
-
-        db_cur.close()
-        db_con.close()
+        self.db_con.commit()
 
         if self.words_dict:
             print('Общее количество записей в базе -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
@@ -234,39 +232,36 @@ class SampleApp(tkinter.Tk):
         height -= 350
         self.geometry('900x700+{}+{}'.format(width, height))
 
-    @staticmethod
-    def _window_deleted():
+    def _window_deleted(self):
         from tkinter import messagebox
-        messagebox.showwarning("Блять", 'Блять! Два дебила! Для кого кнопка "Close"???')
+        messagebox.showwarning("Warning", 'We have buttom "Close"!!!')
+        self.db_cur.close()
+        self.db_con.close()
         root.quit()
 
     def close_button_func(self):
         """
         Реализация кнопки "Close"
         """
+        self.db_cur.close()
+        self.db_con.close()
         self.quit()
 
-    @staticmethod
-    def convert_csv_to_sqlite():
+    def convert_csv_to_sqlite(self):
         """
         Получения списка всех слов и последних 10ти добавленных
         """
-        db_con = sqlite3.connect('TimeForEnglish.db')
-        db_cur = db_con.cursor()
-
         csv_path = "English_dictionary.csv"
 
         # отчищаем базу
-        db_cur.execute("""
+        self.db_cur.executescript("""
             DROP TABLE IF EXISTS Words; 
-        """)
-        db_cur.execute("""
             DROP TABLE IF EXISTS IrregularVerbs;
         """)
-        db_con.commit()
+        self.db_con.commit()
 
         # создаем таблицу, если ее не существует
-        db_cur.executescript("""
+        self.db_cur.executescript("""
             CREATE TABLE IF NOT EXISTS Words(
                 id_ INTEGER PRIMARY KEY ASC,
                 key TEXT,
@@ -292,7 +287,7 @@ class SampleApp(tkinter.Tk):
             reader = csv.DictReader(csv_file, delimiter=';')
             for row in reader:
                 if row['irregular_verbs']:
-                    db_cur.execute("""
+                    self.db_cur.execute("""
                         INSERT INTO IrregularVerbs(
                             key,
                             translate,
@@ -303,7 +298,7 @@ class SampleApp(tkinter.Tk):
                             description) VALUES (?,?,?,?,?,?,?)
                            """, (row['key'], row['translate'], row['form_2'], row['form_3'], row['example_text'], row['example_question'], row['description']))
                 else:
-                    db_cur.execute("""
+                    self.db_cur.execute("""
                         INSERT INTO Words(
                             key,
                             translate,
@@ -311,9 +306,7 @@ class SampleApp(tkinter.Tk):
                             example_question,
                             description) VALUES (?, ?, ?, ?, ?)
                            """, (row['key'], row['translate'], row['example_text'], row['example_question'], row['description']))
-        db_con.commit()
-        db_cur.close()
-        db_con.close()
+        self.db_con.commit()
 
 
 class PhotoImage(tkinter.Frame):
@@ -555,13 +548,10 @@ class TenWordsPage(tkinter.Frame):
         self.last_ten_words_frame.grid(column=0, row=1, padx=10, pady=10, ipadx=40, ipady=10)
         self.ten_words.pack()
 
-    @staticmethod
-    def get_last_ten_words():
+    def get_last_ten_words(self):
         last_ten_words = ''
-        db_con = sqlite3.connect('TimeForEnglish.db')
-        db_cur = db_con.cursor()
 
-        rows_words = db_cur.execute("""
+        rows_words = self.master.db_cur.execute("""
             SELECT 
                 key,
                 translate
