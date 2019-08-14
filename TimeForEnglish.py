@@ -230,7 +230,7 @@ class SampleApp(tkinter.Tk):
         height = screen_height // 2
         width -= 450  # смещение от середины
         height -= 350
-        self.geometry('900x700+{}+{}'.format(width, height))
+        self.geometry(f'900x700+{width}+{height}')
 
     def _window_deleted(self):
         from tkinter import messagebox
@@ -516,7 +516,7 @@ class MainPage(tkinter.Frame):
                     self.new_text_message()
                 self.entry.delete(0, tkinter.END)
         else:
-            print('\n"{}" answer -> "{}" (translate)'.format(answer, translate))
+            print(f'\n"{answer}" answer -> "{translate}" (translate)')
             MISTAKE = True
             self.entry.config(fg='#CC3366')
             self.info_label['text'] = 'Turn on your brain!'
@@ -560,7 +560,7 @@ class TenWordsPage(tkinter.Frame):
             LIMIT 10
         """)
         for row in rows_words:
-            last_ten_words += '{} -> {}\n'.format(row[0], row[1])
+            last_ten_words += f'{row[0]} -> {row[1]}\n'
         return last_ten_words[:-1]
 
 
