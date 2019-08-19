@@ -432,7 +432,7 @@ class MainPage(tkinter.Frame):
         elif MINUTE == 60:
             HOUR += 1
             MINUTE = 0
-        self.timer['text'] = "%02i:%02i:%02i" % (HOUR, MINUTE, SECOND)
+        self.timer['text'] = f"{HOUR:02}:{MINUTE:02}:{SECOND:02}"
 
     def example_text_audio(self):
         """
@@ -508,12 +508,7 @@ class MainPage(tkinter.Frame):
                 self.word['text'] = ''
                 root.after(5000, root.quit())
             else:
-                # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
-                if key_result.example_text or key_result.example_question:
-                    self.word['text'] = ''
-                    self.check_button.after(3000, self.new_text_message)
-                else:
-                    self.new_text_message()
+                self.new_text_message()
                 self.entry.delete(0, tkinter.END)
         else:
             print(f'\n"{answer}" answer -> "{translate}" (translate)')
@@ -579,10 +574,24 @@ class IrregularVerbsPage(tkinter.Frame):
                                font="Arial 16",
                                background=master.background_color,
                                text='You need to study more!')
-        self.info_label.grid(column=0, row=0, padx=10, pady=10)
 
+        self.timer = tkinter.Label(self,
+                                   text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND),
+                                   font=("Consolas", 14),
+                                   fg='white',
+                                   background=master.background_color)
+        self.timer.after_idle(self.tick)
+
+        # Блок информационный (self)
+        tkinter.Label(self, background=master.background_color).grid(column=0, row=0, padx=10, pady=10)
+        self.info_label.grid(column=0, row=1, padx=10, pady=10)
+        tkinter.Label(self, background=master.background_color).grid(column=0, row=2, padx=10, pady=10)
+        self.timer.grid(column=0, row=3, padx=10, pady=10)
+        tkinter.Label(self, background=master.background_color).grid(column=0, row=4, padx=10, pady=10)
+
+        # Блок для ввода неправильных глаголов (frame_top)
         frame_top = tkinter.Frame(self)
-        frame_top.grid(column=0, row=2, padx=10, pady=10)
+        frame_top.grid(column=0, row=5, padx=10, pady=10)
 
         self.irregular_verb = tkinter.Label(frame_top)
         self.irregular_verb.config(fg='black', font="Arial 14", width=30)
@@ -593,13 +602,13 @@ class IrregularVerbsPage(tkinter.Frame):
         self.example_text.config(font="Purisa 18",
                                  background=master.background_color,
                                  fg='white')
-        self.example_text.grid(column=0, row=3, padx=10, pady=10)
+        self.example_text.grid(column=0, row=6, padx=10, pady=10)
 
         self.example_question = tkinter.Label(self)
         self.example_question.config(font="Purisa 18",
                                      background=master.background_color,
                                      fg='white')
-        self.example_question.grid(column=0, row=4, padx=10, pady=10)
+        self.example_question.grid(column=0, row=7, padx=10, pady=10)
 
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
         self.entry_form_1 = tkinter.Entry(frame_top, width=25, font="Arial 12")
@@ -654,14 +663,6 @@ class IrregularVerbsPage(tkinter.Frame):
         self.check_button.config(command=self.change)
         self.check_button.grid(column=3, row=1, padx=10, pady=10)
 
-        self.timer = tkinter.Label(self,
-                                   text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND),
-                                   font=("Consolas", 14),
-                                   fg='white',
-                                   background=master.background_color)
-        self.timer.grid(column=0, row=1, padx=10, pady=10)
-        self.timer.after_idle(self.tick)
-
     def change(self, event=None):
         """
         Проверка введенного пользователем значения перевода
@@ -704,12 +705,7 @@ class IrregularVerbsPage(tkinter.Frame):
                 self.irregular_verb['text'] = ''
                 root.after(5000, root.quit())
 
-            # Если есть текстовый пример, то следующее тестовое слово появится через 3 сек.
-            if key_result.example_text or key_result.example_question:
-                self.irregular_verb['text'] = ''
-                self.check_button.after(3000, self.new_text_message)
-            else:
-                self.new_text_message()
+            self.new_text_message()
             self.entry_form_1.delete(0, tkinter.END)
             self.entry_form_2.delete(0, tkinter.END)
             self.entry_form_3.delete(0, tkinter.END)
@@ -740,7 +736,7 @@ class IrregularVerbsPage(tkinter.Frame):
         elif MINUTE == 60:
             HOUR += 1
             MINUTE = 0
-        self.timer['text'] = "%02i:%02i:%02i" % (HOUR, MINUTE, SECOND)
+        self.timer['text'] = f"{HOUR:02}:{MINUTE:02}:{SECOND:02}"
 
 
 if __name__ == '__main__':
