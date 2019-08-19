@@ -133,3 +133,5 @@ dmypy.json
 .pyre/
 
 /Tests.xlsx
+/f-strings.txt
+/TimeForEnglish.db
