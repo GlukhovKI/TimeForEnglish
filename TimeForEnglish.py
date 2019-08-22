@@ -42,6 +42,9 @@ class SampleApp(tkinter.Tk):
         self.background_color = '#669999'
         self.default_entry_color = 'black'
 
+        self.audio_image = Image.open(fp='audio_image.png')
+        self.audio_image = ImageTk.PhotoImage(self.audio_image)
+
         self.words_dict = {}
         self.irregular_verbs_dict = {}
 
@@ -376,7 +379,7 @@ class MainPage(tkinter.Frame):
 
         # Аудио предложения с пройденным словом
         self.example_text_button = tkinter.Button(self.example_frame, text="Audio", font="Arial 12")
-        self.example_text_button.config(command=self.example_text_audio)
+        self.example_text_button.config(command=self.example_text_audio, image=master.audio_image)
 
         # Пример вопросительного предложения с пройденным словом
         self.example_question = tkinter.Label(self.example_frame)
@@ -384,7 +387,7 @@ class MainPage(tkinter.Frame):
 
         # Аудио вопросительного предложения с пройденным словом
         self.example_question_button = tkinter.Button(self.example_frame, text="Audio", font="Arial 12")
-        self.example_question_button.config(command=self.example_question_audio)
+        self.example_question_button.config(command=self.example_question_audio, image=master.audio_image)
 
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
         self.entry = tkinter.Entry(self.frame_top, width=25, font="Arial 12", fg='black')
