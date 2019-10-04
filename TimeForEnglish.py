@@ -1,14 +1,13 @@
 import csv
 import os
 import random
+import sqlite3
 import tkinter
 
 import pyttsx3
-import sqlite3
 from PIL import ImageTk, Image
 
 SECOND = MINUTE = HOUR = 0
-MISTAKE = False
 
 
 class RowDb:
@@ -39,12 +38,15 @@ class SampleApp(tkinter.Tk):
     def __init__(self):
         tkinter.Tk.__init__(self)
         self._frame = None
+        self.mistake = False
         self.background_color = '#669999'
         self.default_entry_color = 'black'
 
         self.audio_image = Image.open(fp='audio_image.png')
         self.audio_image = ImageTk.PhotoImage(self.audio_image)
 
+        self.key = ''
+        self.answer = ''
         self.words_dict = {}
         self.irregular_verbs_dict = {}
 
@@ -81,8 +83,16 @@ class SampleApp(tkinter.Tk):
 
         irregular_words_button.grid(column=2, row=0, padx=10, pady=10)
 
+        irregular_words_button = tkinter.Button(menu_frame, text="Add New Word", font="Arial 12",
+                                                command=lambda: self.switch_frame(AddNewWord))
+
+        irregular_words_button.grid(column=3, row=0, padx=10, pady=10)
+
         self.random_word = random.choice(list(self.words_dict.keys()))
+        self.random_word = self.random_word.capitalize()
+
         self.random_irregular_verb = random.choice(list(self.irregular_verbs_dict.keys()))
+        self.random_irregular_verb = self.random_irregular_verb.capitalize()
 
         close_button = tkinter.Button(self, text="Close", font="Arial 12")
         close_button.config(command=self.close_button_func)
@@ -153,7 +163,7 @@ class SampleApp(tkinter.Tk):
     def new_word(self) -> str:
         """ Выбирает новое слово """
         self.random_word = random.choice(list(self.words_dict.keys()))
-        return self.random_word
+        return self.random_word.capitalize()
 
     def new_verb(self) -> str:
         """ Выбирает новый неправильный глагол """
@@ -196,7 +206,7 @@ class SampleApp(tkinter.Tk):
 
     def set_root_config(self):
         """
-        Заполнение конфигурации для корневого окна (root)
+        Заполнение конфигурации для корневого окна (ROOT)
         """
         self.title('Time For English')
 
@@ -240,7 +250,7 @@ class SampleApp(tkinter.Tk):
         messagebox.showwarning("Warning", 'We have buttom "Close"!!!')
         self.db_cur.close()
         self.db_con.close()
-        root.quit()
+        ROOT.quit()
 
     def close_button_func(self):
         """
@@ -299,7 +309,10 @@ class SampleApp(tkinter.Tk):
                             example_text,
                             example_question,
                             description) VALUES (?,?,?,?,?,?,?)
-                           """, (row['key'], row['translate'], row['form_2'], row['form_3'], row['example_text'], row['example_question'], row['description']))
+                           """, (row['key'].lower(), row['translate'].lower(),
+                                 row['form_2'], row['form_3'],
+                                 row['example_text'], row['example_question'],
+                                 row['description']))
                 else:
                     self.db_cur.execute("""
                         INSERT INTO Words(
@@ -308,7 +321,9 @@ class SampleApp(tkinter.Tk):
                             example_text,
                             example_question,
                             description) VALUES (?, ?, ?, ?, ?)
-                           """, (row['key'], row['translate'], row['example_text'], row['example_question'], row['description']))
+                           """, (row['key'].lower(), row['translate'].lower(),
+                                 row['example_text'], row['example_question'],
+                                 row['description']))
         self.db_con.commit()
 
 
@@ -316,6 +331,7 @@ class PhotoImage(tkinter.Frame):
     """
     Загрузка картинки
     """
+
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
 
@@ -366,16 +382,25 @@ class MainPage(tkinter.Frame):
                                text='You need to study more!')
 
         # Виджет Frame (рамка) предназначен для организации виджетов внутри окна.
-        self.frame_top = tkinter.Frame(self)
+        self.top_frame = tkinter.Frame(self)
         self.example_frame = tkinter.Frame(self, background=master.background_color)
+        self.answer_frame = tkinter.Frame(self.top_frame)
 
-        self.word = tkinter.Label(self.frame_top)
+        self.word = tkinter.Label(self.top_frame)
         self.word.config(fg='black', font="Arial 14", width=30)
         self.word['text'] = master.random_word
+
+        self.answer_text = tkinter.Label(self.answer_frame)
+        self.answer_text.config(fg='black', font="Arial 14", width=15)
+        self.answer_text['text'] = ''
 
         # Пример предложения с пройденным словом
         self.example_text = tkinter.Label(self.example_frame)
         self.example_text.config(font="Purisa 18", background=master.background_color, fg='white')
+
+        # Аудио с пройденным словом
+        self.answer_text_button = tkinter.Button(self.answer_frame, text="Audio", font="Arial 12")
+        self.answer_text_button.config(command=self.answer_text_audio, image=master.audio_image)
 
         # Аудио предложения с пройденным словом
         self.example_text_button = tkinter.Button(self.example_frame, text="Audio", font="Arial 12")
@@ -390,13 +415,14 @@ class MainPage(tkinter.Frame):
         self.example_question_button.config(command=self.example_question_audio, image=master.audio_image)
 
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
-        self.entry = tkinter.Entry(self.frame_top, width=25, font="Arial 12", fg='black')
+        self.entry = tkinter.Entry(self.answer_frame, width=25, font="Arial 12", fg='black')
         # Метод bind привязывает событие к какому-либо действию
         # (нажатие кнопки мыши, нажатие клавиши на клавиатуре)
         self.entry.bind("<Return>", self.change)
         self.entry.focus()
+        self.entry.grid(column=0, row=0, padx=10, pady=10)
 
-        self.check_button = tkinter.Button(self.frame_top, text="Проверить", font="Arial 12", width=15)
+        self.check_button = tkinter.Button(self.top_frame, text="Проверить", font="Arial 12", width=15)
         self.check_button.config(command=self.change)
 
         self.timer = tkinter.Label(self,
@@ -406,12 +432,12 @@ class MainPage(tkinter.Frame):
                                    background=master.background_color)
         self.timer.after_idle(self.tick)
 
-        # Блок для ввода слова (frame_top)
-        tkinter.Label(self.frame_top).grid(column=0, row=0, padx=10, pady=10)
-        self.word.grid(column=0, row=1, padx=10, pady=10)
-        self.entry.grid(column=1, row=1, padx=10, pady=10)
+        # Блок для ввода слова (top_frame)
+        tkinter.Label(self.top_frame).grid(column=0, row=0, padx=10, pady=10)
+        self.word.grid(column=0, row=1, padx=10, pady=20)
+        self.answer_frame.grid(column=1, row=1, padx=10, pady=10)
         self.check_button.grid(row=1, column=3, padx=10, pady=10)
-        tkinter.Label(self.frame_top).grid(column=0, row=2, padx=10, pady=10)
+        tkinter.Label(self.top_frame).grid(column=0, row=2, padx=10, pady=10)
 
         # Блок информационный (self)
         tkinter.Label(self, background=master.background_color).grid(column=0, row=0, padx=10, pady=10)
@@ -419,12 +445,15 @@ class MainPage(tkinter.Frame):
         tkinter.Label(self, background=master.background_color).grid(column=0, row=2, padx=10, pady=10)
         self.timer.grid(column=0, row=3, padx=10, pady=10)
         tkinter.Label(self, background=master.background_color).grid(column=0, row=4, padx=10, pady=10)
-        self.frame_top.grid(column=0, row=5, padx=10, pady=10)
+        self.top_frame.grid(column=0, row=5, padx=10, pady=10)
         self.example_frame.grid(column=0, row=6, columnspan=2, padx=10, pady=10)
 
         # Блок примеров пройденного слова формируется только после правильно введенного значения
 
     def tick(self):
+        """
+        Реализация подсчета времени нахождения в программе
+        """
         global SECOND, MINUTE, HOUR
         # Через каждую секунду происходит рекурсивый вызов функции
         self.timer.after(1000, self.tick)
@@ -444,6 +473,13 @@ class MainPage(tkinter.Frame):
         self.master.engine.say(self.example_text['text'])
         self.master.engine.runAndWait()
 
+    def answer_text_audio(self, event=None):
+        """
+        Аудио с пройденным словом
+        """
+        self.master.engine.say(self.master.answer)
+        self.master.engine.runAndWait()
+
     def example_question_audio(self):
         """
         Аудио вопросительного предложения с пройденным словом
@@ -455,16 +491,25 @@ class MainPage(tkinter.Frame):
         """
         Скрываем блок примеров пройденного слова
         """
+        self.answer_text.grid_remove()
+        self.answer_text_button.grid_remove()
         self.example_text.grid_remove()
         self.example_text_button.grid_remove()
         self.example_question.grid_remove()
         self.example_question_button.grid_remove()
 
-    def add_example_frame(self, key_result: RowDb):
+    def add_example_frame(self, key_result: RowDb, answer: str):
         """
         Показываем блок примеров пройденного слова (при наличие примеров)
         """
+        self.entry.grid_remove()
+        self.entry.unbind("<Return>")
+
         self.example_text['text'] = key_result.example_text
+        self.answer_text['text'] = answer
+
+        self.answer_text_button.grid(column=0, row=0, padx=10)
+        self.answer_text.grid(column=1, row=0, padx=10, pady=10)
         self.example_question['text'] = key_result.example_question
 
         if key_result.example_text and key_result.example_question:
@@ -481,41 +526,49 @@ class MainPage(tkinter.Frame):
             self.example_text.grid(column=1, row=0, padx=10, pady=10)
             self.example_text_button.grid(column=0, row=0, padx=10, pady=10)
 
+    def next_task(self, event=None):
+        self.remove_example_frame()
+        self.check_button.config(command=self.change, text='Проверить')
+        self.entry.grid(column=1, row=1, padx=10, pady=10)
+        self.entry.bind("<Return>", self.change)
+        self.master.unbind("<Return>")
+        self.master.unbind("<space>")
+
+        # Если пользователь не совершил ошибку, слово считается пройденным
+        if not self.master.mistake:
+            del self.master.words_dict[self.master.key]
+        self.master.mistake = False
+
+        if not self.master.words_dict:
+            self.word['text'] = ''
+            ROOT.after(5000, ROOT.quit())
+        else:
+            self.new_text_message()
+            self.entry.delete(0, tkinter.END)
+        self.entry.config(fg='black')
+
     def change(self, event=None):
         """
         Проверка введенного пользователем значения перевода
         """
-
-        global MISTAKE
-
-        self.remove_example_frame()
-
-        key = self.word['text']
-        key_result = self.master.words_dict.get(key)
+        self.master.key = self.word['text']
+        key_result = self.master.words_dict.get(self.master.key.lower())
         translate = key_result.translate.lower()
-        answer = self.entry.get().lower()
+        answer = self.entry.get().lower().strip()
+        self.master.answer = answer
 
         if answer == translate:
-            self.add_example_frame(key_result)
+            self.add_example_frame(key_result, answer)
+            self.check_button.config(command=self.next_task, text='Далее')
+            self.master.bind("<Return>", self.next_task)
+            self.master.bind("<space>", self.answer_text_audio)
 
             self.info_label['text'] = 'I knew you could do it!'
             self.info_label.config(fg='white')
-            self.entry.config(fg='black')
 
-            # Если пользователь совершил ошибку, слово не считается пройденным
-            if not MISTAKE:
-                del self.master.words_dict[key]
-            MISTAKE = False
-
-            if not self.master.words_dict:
-                self.word['text'] = ''
-                root.after(5000, root.quit())
-            else:
-                self.new_text_message()
-                self.entry.delete(0, tkinter.END)
         else:
-            print(f'\n"{answer}" answer -> "{translate}" (translate)')
-            MISTAKE = True
+            print(f'\n"{answer}" (answer) -> "{translate}" (translate)')
+            self.master.mistake = True
             self.entry.config(fg='#CC3366')
             self.info_label['text'] = 'Turn on your brain!'
             self.info_label.config(fg='#993333')
@@ -546,7 +599,10 @@ class TenWordsPage(tkinter.Frame):
         self.last_ten_words_frame.grid(column=0, row=1, padx=10, pady=10, ipadx=40, ipady=10)
         self.ten_words.pack()
 
-    def get_last_ten_words(self):
+    def get_last_ten_words(self) -> list:
+        """
+        Получение списка последних 10 добавленных слов
+        """
         last_ten_words = ''
 
         rows_words = self.master.db_cur.execute("""
@@ -560,6 +616,78 @@ class TenWordsPage(tkinter.Frame):
         for row in rows_words:
             last_ten_words += f'{row[0]} -> {row[1]}\n'
         return last_ten_words[:-1]
+
+
+class AddNewWord(tkinter.Frame):
+    """
+    Страница добавления новых слов для изучения
+    """
+
+    def __init__(self, master):
+        tkinter.Frame.__init__(self, master)
+        self.configure(background=master.background_color)
+
+        self.add_frame = tkinter.Frame(self)
+        self.label_word = self.new_label(text='Введите слово или фразу')
+        self.label_translate = self.new_label(text='Введите русский перевод')
+        self.label_example_text = self.new_label(text='Введите пример утвердительного предложения')
+        self.label_example_question = self.new_label(text='Введите пример вопросительного предложения')
+
+        self.entry_word = tkinter.Entry(self.add_frame, width=25, font="Arial 12", fg='black')
+        self.entry_translate = tkinter.Entry(self.add_frame, width=25, font="Arial 12", fg='black')
+        self.entry_example_text = tkinter.Entry(self.add_frame, width=25, font="Arial 12", fg='black')
+        self.entry_example_question = tkinter.Entry(self.add_frame, width=25, font="Arial 12", fg='black')
+
+        self.entry_word.focus()
+
+        self.check_button = tkinter.Button(self.add_frame, text="Добавить", font="Arial 12", width=15)
+        self.check_button.config(command=self.add_new_word)
+
+        self.label_word.grid(row=0, column=0, padx=10, sticky=tkinter.S)
+        self.entry_word.grid(row=1, column=0, padx=10, pady=10)
+
+        self.label_translate.grid(row=2, column=0, padx=10, sticky=tkinter.S)
+        self.entry_translate.grid(row=3, column=0, padx=10, pady=10)
+
+        self.label_example_text.grid(row=4, column=0, padx=10, sticky=tkinter.S)
+        self.entry_example_text.grid(row=5, column=0, padx=10, pady=10)
+
+        self.label_example_question.grid(row=6, column=0, padx=10, sticky=tkinter.S)
+        self.entry_example_question.grid(row=7, column=0, padx=10, pady=10)
+
+        self.check_button.grid(row=3, column=2, padx=10, pady=10)
+
+        self.add_frame.grid(row=0, column=0, padx=10, pady=10)
+
+    def new_label(self, text: str):
+        label_ = tkinter.Label(self.add_frame)
+        label_.config(fg='black', font="Arial 10", text=text)
+        return label_
+
+    def add_new_word(self):
+        """
+        Добавление нового слова в базу
+        """
+        word = self.entry_word.get().strip()
+        translate = self.entry_translate.get().lower().strip()
+        example_text = self.entry_example_text.get().lower().strip()
+        example_question = self.entry_example_question.get().lower().strip()
+        params = [word, translate, example_text, example_question, word]
+        prev_id_ = self.master.db_cur.lastrowid
+        self.master.db_cur.execute("""
+            INSERT INTO Words(
+                key,
+                translate,
+                example_text,
+                example_question
+                ) 
+            SELECT ?, ?, ?, ?
+            WHERE NOT EXISTS (SELECT 1 FROM Words WHERE key = ?)
+            """, params)
+        new_id_ = self.master.db_cur.lastrowid
+        self.master.db_con.commit()
+        if prev_id_ != new_id_:
+            self.master.words_dict[word] = RowDb(new_id_, word, translate, example_text, example_question)
 
 
 class IrregularVerbsPage(tkinter.Frame):
@@ -592,11 +720,11 @@ class IrregularVerbsPage(tkinter.Frame):
         self.timer.grid(column=0, row=3, padx=10, pady=10)
         tkinter.Label(self, background=master.background_color).grid(column=0, row=4, padx=10, pady=10)
 
-        # Блок для ввода неправильных глаголов (frame_top)
-        frame_top = tkinter.Frame(self)
-        frame_top.grid(column=0, row=5, padx=10, pady=10)
+        # Блок для ввода неправильных глаголов (top_frame)
+        top_frame = tkinter.Frame(self)
+        top_frame.grid(column=0, row=5, padx=10, pady=10)
 
-        self.irregular_verb = tkinter.Label(frame_top)
+        self.irregular_verb = tkinter.Label(top_frame)
         self.irregular_verb.config(fg='black', font="Arial 14", width=30)
         self.irregular_verb['text'] = master.random_irregular_verb
         self.irregular_verb.grid(column=0, row=1, padx=10, pady=10)
@@ -614,9 +742,9 @@ class IrregularVerbsPage(tkinter.Frame):
         self.example_question.grid(column=0, row=7, padx=10, pady=10)
 
         # Entry - это виджет, позволяющий пользователю ввести одну строку текста.
-        self.entry_form_1 = tkinter.Entry(frame_top, width=25, font="Arial 12")
-        self.entry_form_2 = tkinter.Entry(frame_top, width=25, font="Arial 12")
-        self.entry_form_3 = tkinter.Entry(frame_top, width=25, font="Arial 12")
+        self.entry_form_1 = tkinter.Entry(top_frame, width=25, font="Arial 12")
+        self.entry_form_2 = tkinter.Entry(top_frame, width=25, font="Arial 12")
+        self.entry_form_3 = tkinter.Entry(top_frame, width=25, font="Arial 12")
 
         # Метод bind привязывает событие к какому-либо действию
         # (нажатие кнопки мыши, нажатие клавиши на клавиатуре)
@@ -662,7 +790,7 @@ class IrregularVerbsPage(tkinter.Frame):
         self.entry_form_2.grid(column=1, row=1, padx=10, pady=10)
         self.entry_form_3.grid(column=1, row=2, padx=10, pady=10)
 
-        self.check_button = tkinter.Button(frame_top, text="Проверить", font="Arial 12", width=15)
+        self.check_button = tkinter.Button(top_frame, text="Проверить", font="Arial 12", width=15)
         self.check_button.config(command=self.change)
         self.check_button.grid(column=3, row=1, padx=10, pady=10)
 
@@ -671,16 +799,15 @@ class IrregularVerbsPage(tkinter.Frame):
         Проверка введенного пользователем значения перевода
         """
 
-        global MISTAKE
-        key = self.irregular_verb['text']
-        key_result = self.master.irregular_verbs_dict.get(key)
+        self.master.key = self.irregular_verb['text']
+        key_result = self.master.irregular_verbs_dict.get(self.master.key)
 
         translate_form_1 = key_result.translate.lower()
         translate_form_2 = key_result.form_2.lower()
         translate_form_3 = key_result.form_3.lower()
-        answer_form_1 = self.entry_form_1.get().lower()
-        answer_form_2 = self.entry_form_2.get().lower()
-        answer_form_3 = self.entry_form_3.get().lower()
+        answer_form_1 = self.entry_form_1.get().lower().strip()
+        answer_form_2 = self.entry_form_2.get().lower().strip()
+        answer_form_3 = self.entry_form_3.get().lower().strip()
 
         if answer_form_1 == translate_form_1 \
                 and answer_form_2 == translate_form_2 \
@@ -699,14 +826,14 @@ class IrregularVerbsPage(tkinter.Frame):
             self.entry_form_2.config(fg='black')
             self.entry_form_3.config(fg='black')
 
-            # Если пользователь совершил ошибку, слово не считается пройденным
-            if not MISTAKE:
-                del self.master.irregular_verbs_dict[key]
-            MISTAKE = False
+            # Если пользователь не совершил ошибку, слово считается пройденным
+            if not self.master.mistake:
+                del self.master.irregular_verbs_dict[self.master.key]
+            self.master.mistake = False
 
             if not self.master.irregular_verbs_dict:
                 self.irregular_verb['text'] = ''
-                root.after(5000, root.quit())
+                ROOT.after(5000, ROOT.quit())
 
             self.new_text_message()
             self.entry_form_1.delete(0, tkinter.END)
@@ -718,7 +845,7 @@ class IrregularVerbsPage(tkinter.Frame):
             print(answer_form_2, ' -> ', translate_form_2)
             print(answer_form_3, ' -> ', translate_form_3)
             print()
-            MISTAKE = True
+            self.master.mistake = True
             self.entry_form_1.config(fg='#CC3366')
             self.entry_form_2.config(fg='#CC3366')
             self.entry_form_3.config(fg='#CC3366')
@@ -726,9 +853,15 @@ class IrregularVerbsPage(tkinter.Frame):
             self.info_label.config(fg='#993333')
 
     def new_text_message(self):
+        """
+        Выбор Нового неправильного глагола
+        """
         self.irregular_verb['text'] = self.master.new_verb()
 
     def tick(self):
+        """
+        Реализация подсчета времени нахождения в программе
+        """
         global SECOND, MINUTE, HOUR
         # Через каждую секунду происходит рекурсивый вызов функции
         self.timer.after(1000, self.tick)
@@ -743,5 +876,5 @@ class IrregularVerbsPage(tkinter.Frame):
 
 
 if __name__ == '__main__':
-    root = SampleApp()
-    root.mainloop()
+    ROOT = SampleApp()
+    ROOT.mainloop()
