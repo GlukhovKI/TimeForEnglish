@@ -3,35 +3,55 @@ import os
 import random
 import sqlite3
 import tkinter
+from collections import namedtuple
 
 import pyttsx3
 from PIL import ImageTk, Image
 
-SECOND = MINUTE = HOUR = 0
+RowDb = namedtuple(typename='RowDb',
+                   field_names='id_ key translate form_2 form_3 example_text example_question description',
+                   defaults=(None, '', '', '', '', '', '', ''))
 
 
-class RowDb:
+class TimeValue:
     """
-    класс-упаковщик для строк из таблицы "Words" (TimeForEnglish.db)
+    Класс, состоящий из изменяемых объектов, необходимо для передачи параметров по ссылке
     """
-    __slots__ = ['id_', 'key', 'translate', 'form_2', 'form_3', 'example_text', 'example_question', 'description']
+    SECOND = MINUTE = HOUR = 0
 
-    def __init__(self, id_: int,
-                 key: str,
-                 translate: str,
-                 example_text: str = '',
-                 example_question: str = '',
-                 description: str = '',
-                 form_2: str = '',
-                 form_3: str = ''):
-        self.id_ = id_
-        self.key = key
-        self.translate = translate
-        self.form_2 = form_2
-        self.form_3 = form_3
-        self.example_text = example_text
-        self.example_question = example_question
-        self.description = description
+    @classmethod
+    def get_time_values(cls) -> tuple:
+        return cls.SECOND, cls.MINUTE, cls.HOUR
+
+    @classmethod
+    def add_second(cls) -> int:
+        cls.SECOND += 1
+        return cls.SECOND
+
+    @classmethod
+    def add_minute(cls) -> int:
+        cls.MINUTE += 1
+        return cls.MINUTE
+
+    @classmethod
+    def add_hour(cls) -> int:
+        cls.HOUR += 1
+        return cls.HOUR
+
+    @classmethod
+    def zeroing_second(cls) -> int:
+        cls.SECOND = 0
+        return cls.SECOND
+
+    @classmethod
+    def zeroing_minute(cls) -> int:
+        cls.MINUTE = 0
+        return cls.MINUTE
+
+    @classmethod
+    def zeroing_hour(cls) -> int:
+        cls.HOUR = 0
+        return cls.HOUR
 
 
 class SampleApp(tkinter.Tk):
@@ -156,7 +176,7 @@ class SampleApp(tkinter.Tk):
         self.db_con.commit()
 
         if self.words_dict:
-            print('Общее количество записей в базе -', len(self.words_dict) + len(self.irregular_verbs_dict), '\n')
+            print(f'Общее количество записей в базе - {len(self.words_dict) + len(self.irregular_verbs_dict)}\n')
         else:
             raise Exception('Нет данных для изучения')
 
@@ -262,7 +282,7 @@ class SampleApp(tkinter.Tk):
 
     def convert_csv_to_sqlite(self):
         """
-        Получения списка всех слов и последних 10ти добавленных
+        Получения списка всех слов
         """
         csv_path = "English_dictionary.csv"
 
@@ -335,9 +355,11 @@ class PhotoImage(tkinter.Frame):
     def __init__(self, master):
         tkinter.Frame.__init__(self, master)
 
-        # открываем изображение
-        path = ".//PhotoImage//Picture_1.jpg"
-        image = Image.open(path)
+        self.viewed_pictures_file = "./PhotoImage/viewed_pictures.txt"
+        self.picture_choice = ''
+
+        self._get_picture_choice()
+        image = Image.open(f'./PhotoImage/{self.picture_choice}')
 
         # находим максимальную длину сторон
         max_size = max(image.size)
@@ -353,18 +375,38 @@ class PhotoImage(tkinter.Frame):
         self.panel = tkinter.Label(self, image=self.img)
         self.panel.grid(column=1, row=1, columnspan=6, rowspan=3, sticky=tkinter.N)
 
-    def get_path_to_image(self):
-        # Открываем файл со списком картинок
-        picture_list = open("./PhotoImage/test.txt", "w")
-        # Получаем список файлов из папки
-        files = os.listdir("./PhotoImage")
+    def _get_picture_choice(self):
+        """
+        выбираем рандомную картинку, которую пользователь еще не видел
+        """
 
-        # Исключаем файл из списка файлов, полученных в предыдущем шаге
-        files.remove("test.txt")
-        # Названия, которые остались из списка - записываем в файл
-        for name in files:
-            picture_list.write(name)
+        # если файл существует, но он пустой
+        if os.path.exists(self.viewed_pictures_file) and os.stat(self.viewed_pictures_file).st_size == 0:
+            # получаем список файлов из папки
+            file_names = os.listdir("./PhotoImage")
+            # исключаем viewed_pictures.txt из списка файлов, полученных в предыдущем шаге
+            file_names.remove("viewed_pictures.txt")
+        elif not os.path.exists(self.viewed_pictures_file):
+            # получаем список файлов из папки
+            file_names = os.listdir("./PhotoImage")
+        else:
+            file_names = open(self.viewed_pictures_file, 'r').read().splitlines()
 
+        # выбираем рандомное изображение
+        self.picture_choice = random.choice(file_names)
+
+        self.write_file(file_names)
+
+    def write_file(self, file_names: list):
+        """
+        запись скписка изображений в файл
+        """
+        # удаляем выбранное изображение из списка
+        file_names.remove(self.picture_choice)
+
+        with open(self.viewed_pictures_file, "w") as viewed_pictures:
+            for name in file_names:
+                viewed_pictures.write(name + '\n')
 
 class MainPage(tkinter.Frame):
     """
@@ -426,7 +468,7 @@ class MainPage(tkinter.Frame):
         self.check_button.config(command=self.change)
 
         self.timer = tkinter.Label(self,
-                                   text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND),
+                                   text="%02i:%02i:%02i" % (TimeValue.get_time_values()),
                                    font=("Consolas", 14),
                                    fg='white',
                                    background=master.background_color)
@@ -454,17 +496,19 @@ class MainPage(tkinter.Frame):
         """
         Реализация подсчета времени нахождения в программе
         """
-        global SECOND, MINUTE, HOUR
+        _, minute, hour = TimeValue.get_time_values()
         # Через каждую секунду происходит рекурсивый вызов функции
         self.timer.after(1000, self.tick)
-        SECOND += 1
-        if SECOND == 60:
-            MINUTE += 1
-            SECOND = 0
-        elif MINUTE == 60:
-            HOUR += 1
-            MINUTE = 0
-        self.timer['text'] = f"{HOUR:02}:{MINUTE:02}:{SECOND:02}"
+        second = TimeValue.add_second()
+        if second == 60:
+            minute = TimeValue.add_minute()
+            second = TimeValue.zeroing_second()
+        elif minute == 60:
+            hour = TimeValue.add_hour()
+            minute = TimeValue.zeroing_minute()
+        elif hour == 24:
+            hour = TimeValue.zeroing_hour()
+        self.timer['text'] = f"{hour:02}:{minute:02}:{second:02}"
 
     def example_text_audio(self):
         """
@@ -707,7 +751,7 @@ class IrregularVerbsPage(tkinter.Frame):
                                text='You need to study more!')
 
         self.timer = tkinter.Label(self,
-                                   text="%02i:%02i:%02i" % (HOUR, MINUTE, SECOND),
+                                   text="%02i:%02i:%02i" % (TimeValue.get_time_values()),
                                    font=("Consolas", 14),
                                    fg='white',
                                    background=master.background_color)
@@ -799,9 +843,8 @@ class IrregularVerbsPage(tkinter.Frame):
         Проверка введенного пользователем значения перевода
         """
 
-        self.master.key = self.irregular_verb['text']
+        self.master.key = self.irregular_verb['text'].lower()
         key_result = self.master.irregular_verbs_dict.get(self.master.key)
-
         translate_form_1 = key_result.translate.lower()
         translate_form_2 = key_result.form_2.lower()
         translate_form_3 = key_result.form_3.lower()
@@ -841,10 +884,9 @@ class IrregularVerbsPage(tkinter.Frame):
             self.entry_form_3.delete(0, tkinter.END)
             self.entry_form_1.focus()
         else:
-            print(answer_form_1, ' -> ', translate_form_1)
-            print(answer_form_2, ' -> ', translate_form_2)
-            print(answer_form_3, ' -> ', translate_form_3)
-            print()
+            print(f'{answer_form_1} -> {translate_form_1}\n'
+                  f'{answer_form_2} -> {translate_form_2}\n'
+                  f'{answer_form_3} -> {translate_form_3}\n')
             self.master.mistake = True
             self.entry_form_1.config(fg='#CC3366')
             self.entry_form_2.config(fg='#CC3366')
@@ -862,17 +904,19 @@ class IrregularVerbsPage(tkinter.Frame):
         """
         Реализация подсчета времени нахождения в программе
         """
-        global SECOND, MINUTE, HOUR
+        _, minute, hour = TimeValue.get_time_values()
         # Через каждую секунду происходит рекурсивый вызов функции
         self.timer.after(1000, self.tick)
-        SECOND += 1
-        if SECOND == 60:
-            MINUTE += 1
-            SECOND = 0
-        elif MINUTE == 60:
-            HOUR += 1
-            MINUTE = 0
-        self.timer['text'] = f"{HOUR:02}:{MINUTE:02}:{SECOND:02}"
+        second = TimeValue.add_second()
+        if second == 60:
+            minute = TimeValue.add_minute()
+            second = TimeValue.zeroing_second()
+        elif minute == 60:
+            hour = TimeValue.add_hour()
+            minute = TimeValue.zeroing_minute()
+        elif hour == 24:
+            hour = TimeValue.zeroing_hour()
+        self.timer['text'] = f"{hour:02}:{minute:02}:{second:02}"
 
 
 if __name__ == '__main__':
